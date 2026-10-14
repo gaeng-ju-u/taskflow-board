@@ -12,17 +12,17 @@
 
 ## 기술 스택
 
-| 영역       | 선택                                                     |
-| ---------- | -------------------------------------------------------- |
-| 프레임워크 | Next.js 16 (App Router), React 19, TypeScript            |
-| 스타일/UI  | Tailwind 4, shadcn/ui (Radix), lucide-react              |
-| 테마       | next-themes + 인라인 스크립트로 첫 페인트 전 테마 적용   |
-| 백엔드     | Supabase (`@supabase/supabase-js`, `@supabase/ssr`)      |
-| 서버 상태  | TanStack Query (낙관적 업데이트, Realtime으로 캐시 갱신) |
-| DnD        | dnd-kit                                                  |
-| 폼/검증    | React Hook Form + Zod                                    |
-| 인증 가드  | `proxy.ts` (Next 16에서 middleware 대체)                 |
-| 포맷팅     | Prettier + prettier-plugin-tailwindcss                   |
+| 영역       | 선택                                                                                                              |
+| ---------- | ----------------------------------------------------------------------------------------------------------------- |
+| 프레임워크 | Next.js 16 (App Router), React 19, TypeScript                                                                     |
+| 스타일/UI  | Tailwind 4, shadcn/ui (Base UI), lucide-react                                                                     |
+| 테마       | 직접 구현: 인라인 스크립트(첫 페인트 전 적용) + useSyncExternalStore 훅. next-themes는 2025-03 이후 미관리라 제외 |
+| 백엔드     | Supabase (`@supabase/supabase-js`, `@supabase/ssr`)                                                               |
+| 서버 상태  | TanStack Query (낙관적 업데이트, Realtime으로 캐시 갱신)                                                          |
+| DnD        | dnd-kit                                                                                                           |
+| 폼/검증    | React Hook Form + Zod                                                                                             |
+| 인증 가드  | `proxy.ts` (Next 16에서 middleware 대체)                                                                          |
+| 포맷팅     | Prettier + prettier-plugin-tailwindcss                                                                            |
 
 ## 데이터 모델
 
@@ -66,7 +66,7 @@ proxy.ts                                             비로그인 리다이렉�
 
 ### 1주차: 기반과 핵심 흐름 (끝나면 배포)
 
-- [ ] 의존성 설치, shadcn 초기화, 다크모드 (깜빡임 방지)
+- [x] shadcn 초기화, 다크모드 (깜빡임 방지)
 - [ ] Supabase 프로젝트 생성, 스키마·RLS 마이그레이션, 타입 생성
 - [ ] 인증 (GitHub OAuth, 매직링크), `proxy.ts` 가드, 첫 로그인 시 워크스페이스 생성
 - [ ] 프로젝트 CRUD, 이슈 CRUD (상태·우선순위·담당자)
