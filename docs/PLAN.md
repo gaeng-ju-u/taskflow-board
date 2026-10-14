@@ -38,7 +38,7 @@
 - `activities` (issue_id, actor_id, type, payload jsonb): DB 트리거로 자동 기록
 - `cycles` (project_id, name, starts_at, ends_at)
 
-**RLS**: 모든 테이블에 "해당 workspace 멤버만 읽기/쓰기" 정책. 헬퍼 함수 `is_workspace_member(ws_id)`를 재사용한다.
+**RLS**: 모든 테이블에 "해당 workspace 멤버만 읽기/쓰기" 정책. 헬퍼 함수(`private.is_workspace_member` 등)는 API에 노출되지 않는 `private` 스키마에 둔다. `issues`, `comments`는 RLS와 Realtime 필터를 위해 `workspace_id`를 비정규화했다(트리거가 채움). 초대 수락은 `accept_invitation(token)` RPC로 한다. 검증: `npm run test:db`
 **이슈 번호**: `TF-123` 형식. insert 트리거가 `projects.issue_seq`를 증가시켜 번호를 매긴다.
 
 ## 라우트 구조
@@ -67,7 +67,7 @@ proxy.ts                                             비로그인 리다이렉�
 ### 1주차: 기반과 핵심 흐름 (끝나면 배포)
 
 - [x] shadcn 초기화, 다크모드 (깜빡임 방지)
-- [ ] Supabase 프로젝트 생성, 스키마·RLS 마이그레이션, 타입 생성
+- [x] Supabase 프로젝트 생성, 스키마·RLS 마이그레이션, 타입 생성, RLS 테스트(pgTAP 16개)
 - [ ] 인증 (GitHub OAuth, 매직링크), `proxy.ts` 가드, 첫 로그인 시 워크스페이스 생성
 - [ ] 프로젝트 CRUD, 이슈 CRUD (상태·우선순위·담당자)
 - [ ] 칸반 보드 + dnd-kit, 낙관적 업데이트
