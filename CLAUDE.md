@@ -23,14 +23,18 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - `components/ui/`: shadcn 컴포넌트. `npx shadcn@latest add <name>`으로 추가하고, 생성된 파일은 필요할 때만 수정
 - `components/<도메인>/`: 도메인 컴포넌트 (예: `components/issues/`, `components/board/`)
 - `lib/supabase/server.ts`, `lib/supabase/client.ts`: Supabase 클라이언트는 여기서만 생성
-- `lib/queries/`: TanStack Query 키와 쿼리·뮤테이션 훅
+- `lib/data/`: Server Component용 데이터 함수 (`import "server-only"`, React `cache`로 요청 내 중복 제거). 예: `getCurrentUser`, `getWorkspaceBySlug`
+- `lib/queries/`: TanStack Query 키와 쿼리·뮤테이션 훅 (클라이언트 상호작용 데이터)
+- `lib/validations/`: Zod 스키마 (폼과 Server Action이 공유)
 - `hooks/`: 범용 클라이언트 훅 (예: `use-theme.ts`)
 - `supabase/migrations/`: SQL 마이그레이션. `npx supabase migration new <name> </dev/null`로 파일을 만든다 (stdin을 막지 않으면 입력을 기다리며 멈춤)
 - `supabase/tests/`: RLS와 트리거 pgTAP 테스트. 파일은 `select * from finish();` + `rollback;`으로 끝나야 한다
 
 ## 코드 규칙
 
-- 서버 데이터는 TanStack Query로 다룬다. 컴포넌트에서 Supabase를 직접 호출하지 않는다.
+- 컴포넌트에서 Supabase를 직접 호출하지 않는다. Server Component는 `lib/data/` 함수로 읽고, 클라이언트의 서버 데이터는 TanStack Query로 다룬다. 폼 제출(로그인, 생성)은 Server Action + `useActionState`로 처리한다.
+- `cacheComponents`가 켜져 있다. 쿠키·세션·DB를 읽는 Server Component는 `<Suspense>` 안에 두고, layout·page 최상단에서 await하지 않는다 (`params`는 Promise 그대로 자식에 넘긴다). `useSearchParams`를 쓰는 클라이언트 컴포넌트도 가능한 작게 분리해 Suspense로 감싼다.
+- 세션 확인은 `supabase.auth.getClaims()`를 쓴다 (`getSession()`은 서명을 검증하지 않음). 로그인 후 이동 경로는 `safeNextPath()`로 검사해 open redirect를 막는다.
 - 뮤테이션은 낙관적 업데이트로 처리하고, 실패하면 롤백하고 토스트로 알린다.
 - 권한은 RLS로 보장한다. 클라이언트의 권한 검사는 UX용일 뿐이다.
 - 필터, 정렬, 그룹 상태는 URL search params에 둔다.
