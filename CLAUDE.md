@@ -20,11 +20,12 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 
 ## 폴더 구조
 
-- `components/ui/`: shadcn 컴포넌트. `npx shadcn@latest add <name>`으로 추가하고, 생성된 파일은 필요할 때만 수정
+- `components/ui/`: shadcn 컴포넌트. `printf 'n\n' | npx shadcn@latest add <name>`으로 추가한다 (기존 파일 덮어쓰기 질문에서 멈추지 않게). 생성된 파일은 필요할 때만 수정. 토스트는 `components/ui/toaster.tsx`(sonner + useTheme)를 쓰고 shadcn sonner는 쓰지 않는다 (next-themes 의존)
 - `components/<도메인>/`: 도메인 컴포넌트 (예: `components/issues/`, `components/board/`)
 - `lib/supabase/server.ts`, `lib/supabase/client.ts`: Supabase 클라이언트는 여기서만 생성
 - `lib/data/`: Server Component용 데이터 함수 (`import "server-only"`, React `cache`로 요청 내 중복 제거). 예: `getCurrentUser`, `getWorkspaceBySlug`
-- `lib/queries/`: TanStack Query 키와 쿼리·뮤테이션 훅 (클라이언트 상호작용 데이터)
+- `lib/api/`: 서버와 클라이언트가 함께 쓰는 조회 함수와 타입 (어느 Supabase 클라이언트든 받음). 예: `listProjects`, `Project`
+- `lib/queries/`: TanStack Query 훅. 키는 `keys.ts`의 `queryKeys`로만 만든다 (워크스페이스 단위로 묶음)
 - `lib/validations/`: Zod 스키마 (폼과 Server Action이 공유)
 - `hooks/`: 범용 클라이언트 훅 (예: `use-theme.ts`)
 - `supabase/migrations/`: SQL 마이그레이션. `npx supabase migration new <name> </dev/null`로 파일을 만든다 (stdin을 막지 않으면 입력을 기다리며 멈춤)
@@ -35,7 +36,12 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 컴포넌트에서 Supabase를 직접 호출하지 않는다. Server Component는 `lib/data/` 함수로 읽고, 클라이언트의 서버 데이터는 TanStack Query로 다룬다. 폼 제출(로그인, 생성)은 Server Action + `useActionState`로 처리한다.
 - `cacheComponents`가 켜져 있다. 쿠키·세션·DB를 읽는 Server Component는 `<Suspense>` 안에 두고, layout·page 최상단에서 await하지 않는다 (`params`는 Promise 그대로 자식에 넘긴다). `useSearchParams`를 쓰는 클라이언트 컴포넌트도 가능한 작게 분리해 Suspense로 감싼다.
 - 세션 확인은 `supabase.auth.getClaims()`를 쓴다 (`getSession()`은 서명을 검증하지 않음). 로그인 후 이동 경로는 `safeNextPath()`로 검사해 open redirect를 막는다.
-- 뮤테이션은 낙관적 업데이트로 처리하고, 실패하면 롤백하고 토스트로 알린다.
+- 뮤테이션은 낙관적 업데이트로 처리한다: `onMutate`에서 `applyOptimistic`, `onError`에서 `rollbackOptimistic`(롤백 + 토스트), `onSettled`에서 `invalidateQueries`. 생성할 때는 id를 클라이언트에서 `crypto.randomUUID()`로 만들어 낙관적 항목과 서버 결과의 id를 맞춘다.
+- `mutate(vars, { onSuccess })`처럼 호출할 때 넘긴 콜백은 그 컴포넌트가 언마운트되면 실행되지 않는다. 낙관적 업데이트로 화면 구조가 바뀌면(빈 상태 → 목록) 호출한 컴포넌트가 사라질 수 있으므로, 호출하는 컴포넌트를 같은 자리에 유지하거나 훅 옵션의 콜백을 쓴다.
+- 뮤테이션은 `networkMode: "always"`(QueryProvider 기본값)다. 오프라인이면 일시정지하지 않고 바로 실패해서 롤백·알림한다. 롤백은 개발자 도구 Network의 Offline으로 테스트할 수 있다.
+- 서버 컴포넌트가 읽은 데이터는 클라이언트 컴포넌트의 `useQuery`에 `initialData`로 넘겨 첫 화면부터 보여준다. 같은 데이터를 보는 컴포넌트는 같은 쿼리 키를 써서 캐시를 공유한다.
+- `lib/supabase/server.ts`의 `createClient()`는 `await connection()`을 먼저 호출한다. Partial Prefetching이 쿠키 기반 내용까지 미리 렌더하는데, Supabase(토큰 만료 확인)와 TanStack Query가 렌더 중 `Date.now()`를 써서 에러가 나기 때문이다. 이 줄을 지우지 않는다.
+- 개발 서버 에러는 `.next/dev/logs/next-development.log`에서 확인할 수 있다.
 - 권한은 RLS로 보장한다. 클라이언트의 권한 검사는 UX용일 뿐이다.
 - 필터, 정렬, 그룹 상태는 URL search params에 둔다.
 - `'use client'`는 상호작용이 필요한 말단 컴포넌트에만 붙인다.

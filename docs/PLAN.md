@@ -69,7 +69,8 @@ proxy.ts                                             비로그인 리다이렉�
 - [x] shadcn 초기화, 다크모드 (깜빡임 방지)
 - [x] Supabase 프로젝트 생성, 스키마·RLS 마이그레이션, 타입 생성, RLS 테스트(pgTAP 16개)
 - [x] 인증 (GitHub OAuth, 매직링크), `proxy.ts` 가드, 첫 로그인 시 워크스페이스 생성
-- [ ] 프로젝트 CRUD, 이슈 CRUD (상태·우선순위·담당자)
+- [x] 프로젝트 CRUD: TanStack Query 도입, 사이드바, 생성·이름 변경·삭제 (낙관적 업데이트)
+- [ ] 이슈 CRUD (상태·우선순위·담당자), 이슈 목록·상세
 - [ ] 칸반 보드 + dnd-kit, 낙관적 업데이트
 - [ ] Vercel 배포, 환경 변수 설정
 
@@ -96,3 +97,17 @@ proxy.ts                                             비로그인 리다이렉�
 - 다크모드: 새로고침할 때 테마가 깜빡이지 않는지 확인
 - 배포본에서 데모 로그인 → 이슈 생성 → 이동 흐름 점검
 - (여유 시) Playwright E2E 1개: 로그인 → 이슈 생성 → 보드 이동
+
+## 알려진 문제
+
+### 개발 서버 재시작 직후 페이지 새로고침 반복 (원인 미확정, 2026-10-15)
+
+- **증상**: `npm run dev` 재시작 후 워크스페이스 화면이 약 0.1초 간격으로 계속 새로고침된다(깜빡임). 브라우저 콘솔에 `The server could not finish this Suspense boundary`가 반복된다.
+- **해결 방법(임시)**: 브라우저의 정지(X) 버튼을 누르거나 사이트 데이터를 지우면 멈추고, 이후에는 정상 동작한다.
+- **확인된 것**
+  - Suspense 에러는 원인이 아니라 결과다. 스트리밍 도중 새로고침되어 끝나지 않은 경계마다 찍힌다.
+  - 앱 코드에는 새로고침·이동을 일으키는 코드가 없다.
+  - `next-instant-navigation-testing` 쿠키는 없었다(가설 기각).
+  - 헤드리스 Chrome에서는 재현되지 않았다: 콜드 서버, 탭 2개, 탭을 연 채 서버 재시작, 실제 세션, 큰(조각난) 쿠키, 토큰 갱신.
+- **다음에 발생하면**: 정지하기 전에 DevTools Network(Preserve log, Doc 필터)에서 반복되는 요청의 **Initiator**를 확인하고, Application → Service workers에 등록된 것이 있는지 본다. 로그(`.next/dev/logs/next-development.log`)는 서버 재시작 시 지워지므로 서버를 켠 채로 확인한다.
+- **후보 실험**: `next.config.ts`의 `partialPrefetching`을 끄고 재시작을 여러 번 반복해 재발 여부를 비교한다.
