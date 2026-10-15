@@ -43,7 +43,11 @@ function subscribe(onChange: () => void) {
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, readTheme, () => "system");
+  const theme = useSyncExternalStore<Theme>(
+    subscribe,
+    readTheme,
+    () => "system",
+  );
 
   const setTheme = useCallback((next: Theme) => {
     try {

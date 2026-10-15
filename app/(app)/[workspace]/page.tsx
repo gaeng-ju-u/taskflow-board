@@ -1,31 +1,34 @@
 import { Suspense } from "react";
 
+import { ProjectList } from "@/components/projects/project-list";
+import { getProjects } from "@/lib/data/projects";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
 
 export default function WorkspacePage({ params }: PageProps<"/[workspace]">) {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center">
+    <main className="flex flex-1 flex-col p-6">
       <Suspense
-        fallback={<div className="h-8 w-64 animate-pulse rounded bg-muted" />}
+        fallback={
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        }
       >
-        <Welcome params={params} />
+        <WorkspaceProjects params={params} />
       </Suspense>
-      {/* 프로젝트 목록은 다음 단계(프로젝트 CRUD)에서 채운다. */}
-      <p className="text-muted-foreground">아직 프로젝트가 없습니다.</p>
     </main>
   );
 }
 
-async function Welcome({
+async function WorkspaceProjects({
   params,
 }: {
   params: PageProps<"/[workspace]">["params"];
 }) {
   const { workspace: slug } = await params;
   const workspace = await getWorkspaceBySlug(slug);
-  return (
-    <h1 className="text-2xl font-semibold tracking-tight">
-      {workspace.name}에 오신 것을 환영합니다
-    </h1>
-  );
+  const projects = await getProjects(workspace.id);
+  return <ProjectList workspace={workspace} initialProjects={projects} />;
 }
