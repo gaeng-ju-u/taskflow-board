@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +17,9 @@ export default function Home() {
         <p className="text-muted-foreground">
           프로젝트와 이슈를 한곳에서 관리하세요.
         </p>
-        <Button>시작하기</Button>
+        <Button render={<Link href="/login" />} nativeButton={false}>
+          시작하기
+        </Button>
       </main>
     </div>
   );
