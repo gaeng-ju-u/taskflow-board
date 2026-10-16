@@ -70,7 +70,7 @@ proxy.ts                                             비로그인 리다이렉�
 - [x] Supabase 프로젝트 생성, 스키마·RLS 마이그레이션, 타입 생성, RLS 테스트(pgTAP 16개)
 - [x] 인증 (GitHub OAuth, 매직링크), `proxy.ts` 가드, 첫 로그인 시 워크스페이스 생성
 - [x] 프로젝트 CRUD: TanStack Query 도입, 사이드바, 생성·이름 변경·삭제 (낙관적 업데이트)
-- [ ] 이슈 CRUD (상태·우선순위·담당자), 이슈 목록·상세
+- [x] 이슈 CRUD (상태·우선순위·담당자), 이슈 목록·상세 (`/[workspace]/issue/TF-12`), 오프라인 처리
 - [ ] 칸반 보드 + dnd-kit, 낙관적 업데이트
 - [ ] Vercel 배포, 환경 변수 설정
 
