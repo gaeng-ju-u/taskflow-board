@@ -30,15 +30,19 @@ export function DeleteProjectDialog({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const deleteProject = useDeleteProject(project.workspace_id);
+  // 지운 프로젝트를 보고 있었다면, 삭제가 성공한 뒤 워크스페이스 홈으로 나간다.
+  const viewingProject = pathname.startsWith(
+    projectPath(workspaceSlug, project.key),
+  );
+  const deleteProject = useDeleteProject(project.workspace_id, {
+    onDeleted: () => {
+      if (viewingProject) router.push(`/${workspaceSlug}`);
+    },
+  });
 
   function handleDelete() {
     deleteProject.mutate(project.id);
     onOpenChange(false);
-    // 지우는 프로젝트를 보고 있었다면 워크스페이스 홈으로 나간다.
-    if (pathname.startsWith(projectPath(workspaceSlug, project.key))) {
-      router.push(`/${workspaceSlug}`);
-    }
   }
 
   return (

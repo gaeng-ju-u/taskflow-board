@@ -38,7 +38,8 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 세션 확인은 `supabase.auth.getClaims()`를 쓴다 (`getSession()`은 서명을 검증하지 않음). 로그인 후 이동 경로는 `safeNextPath()`로 검사해 open redirect를 막는다.
 - 뮤테이션은 낙관적 업데이트로 처리한다: `onMutate`에서 `applyOptimistic`, `onError`에서 `rollbackOptimistic`(롤백 + 토스트), `onSettled`에서 `invalidateQueries`. 생성할 때는 id를 클라이언트에서 `crypto.randomUUID()`로 만들어 낙관적 항목과 서버 결과의 id를 맞춘다.
 - `mutate(vars, { onSuccess })`처럼 호출할 때 넘긴 콜백은 그 컴포넌트가 언마운트되면 실행되지 않는다. 낙관적 업데이트로 화면 구조가 바뀌면(빈 상태 → 목록) 호출한 컴포넌트가 사라질 수 있으므로, 호출하는 컴포넌트를 같은 자리에 유지하거나 훅 옵션의 콜백을 쓴다.
-- 뮤테이션은 `networkMode: "always"`(QueryProvider 기본값)다. 오프라인이면 일시정지하지 않고 바로 실패해서 롤백·알림한다. 롤백은 개발자 도구 Network의 Offline으로 테스트할 수 있다.
+- 뮤테이션 뒤의 화면 이동(삭제 후 목록으로 등)은 성공한 뒤에만 한다 (`useDeleteIssue(ws, { onDeleted })` 같은 훅 옵션). 요청과 동시에 이동하면 오프라인에서 이동 요청이 실패해 브라우저 오류 화면(공룡)으로 넘어간다.
+- 오프라인 처리: 브라우저가 오프라인(`navigator.onLine === false`)이면 `applyOptimistic`이 화면을 바꾸지 않고 `OfflineError`를 던져 요청 없이 끝낸다("오프라인" 알림). 온라인인데 서버가 실패하면 낙관적으로 바꿨다가 롤백하고 알린다. 뮤테이션은 `networkMode: "always"`(QueryProvider 기본값)라 일시정지하지 않는다. 에러 타입은 `MutationError`, 에러 코드 확인은 `hasErrorCode()`를 쓴다.
 - 서버 컴포넌트가 읽은 데이터는 클라이언트 컴포넌트의 `useQuery`에 `initialData`로 넘겨 첫 화면부터 보여준다. 같은 데이터를 보는 컴포넌트는 같은 쿼리 키를 써서 캐시를 공유한다.
 - `lib/supabase/server.ts`의 `createClient()`는 `await connection()`을 먼저 호출한다. Partial Prefetching이 쿠키 기반 내용까지 미리 렌더하는데, Supabase(토큰 만료 확인)와 TanStack Query가 렌더 중 `Date.now()`를 써서 에러가 나기 때문이다. 이 줄을 지우지 않는다.
 - 개발 서버 에러는 `.next/dev/logs/next-development.log`에서 확인할 수 있다.
@@ -50,6 +51,9 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 테마는 `lib/theme.ts`의 인라인 스크립트와 `hooks/use-theme.ts`로 처리한다 (next-themes 미사용). 클래스 병합은 `cn` 패키지의 `cn()`을 쓴다.
 - shadcn 컴포넌트를 다른 요소로 렌더할 때는 `asChild`가 아니라 Base UI의 `render` prop을 쓴다.
 - 입력 검증은 Zod 스키마로 하고, 폼과 뮤테이션에서 같은 스키마를 공유한다.
+- 키보드 처리(Enter 저장, Esc 취소, 단축키)는 `event.nativeEvent.isComposing`이면 무시한다. 한글 조합 중의 Enter에 반응하면 마지막 글자가 한 번 더 입력된다.
+- 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
+- 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.
 - 이미 적용된 마이그레이션은 수정하지 않고 새 마이그레이션을 추가한다. 스키마나 정책을 바꾸면 `supabase/tests/`도 갱신한다.
 - RLS 헬퍼 함수는 API에 노출되지 않는 `private` 스키마에 둔다. `security definer` 함수는 `set search_path = ''`로 만들고 이름을 스키마로 한정한다.
 - 환경 변수는 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (anon key 아님). `.env.local`의 값은 출력하지 않는다.

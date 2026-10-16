@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PostgrestError } from "@supabase/supabase-js";
 
 import {
   listProjects,
@@ -14,7 +13,9 @@ import type { CreateProjectInput } from "@/lib/validations/project";
 import { queryKeys } from "./keys";
 import {
   applyOptimistic,
+  hasErrorCode,
   rollbackOptimistic,
+  type MutationError,
   type OptimisticContext,
 } from "./optimistic";
 
@@ -36,7 +37,7 @@ export function useCreateProject(workspaceId: string) {
   // id를 호출하는 쪽에서 만들어 넘긴다. 낙관적으로 추가한 항목과 서버 결과가 같은 id를 갖게 된다.
   return useMutation<
     Project,
-    PostgrestError,
+    MutationError,
     CreateProjectInput & { id: string },
     Context
   >({
@@ -59,14 +60,12 @@ export function useCreateProject(workspaceId: string) {
         },
       ]),
     onError: (error, _input, context) =>
-      rollbackOptimistic(
-        queryClient,
-        queryKey,
-        context,
-        error.code === "23505"
+      rollbackOptimistic(queryClient, queryKey, context, {
+        error,
+        message: hasErrorCode(error, "23505")
           ? "이미 사용 중인 프로젝트 키입니다."
           : "프로젝트를 만들지 못했습니다.",
-      ),
+      }),
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 }
@@ -77,7 +76,7 @@ export function useRenameProject(workspaceId: string) {
 
   return useMutation<
     void,
-    PostgrestError,
+    MutationError,
     { id: string; name: string },
     Context
   >({
@@ -94,22 +93,26 @@ export function useRenameProject(workspaceId: string) {
           project.id === id ? { ...project, name } : project,
         ),
       ),
-    onError: (_error, _input, context) =>
-      rollbackOptimistic(
-        queryClient,
-        queryKey,
-        context,
-        "이름을 바꾸지 못했습니다.",
-      ),
+    onError: (error, _input, context) =>
+      rollbackOptimistic(queryClient, queryKey, context, {
+        error,
+        message: "이름을 바꾸지 못했습니다.",
+      }),
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 }
 
-export function useDeleteProject(workspaceId: string) {
+// onDeleted는 삭제가 성공한 뒤 실행된다 (예: 다른 화면으로 이동). 실패하면 실행되지 않으므로, 오프라인에서
+// 이동하다 브라우저 오류 화면으로 가는 일이 없다. 훅 옵션이라 호출한 컴포넌트가 낙관적 업데이트로
+// 먼저 사라져도 실행된다 (mutate()에 넘긴 콜백은 실행되지 않음).
+export function useDeleteProject(
+  workspaceId: string,
+  options?: { onDeleted?: (id: string) => void },
+) {
   const queryClient = useQueryClient();
   const queryKey = queryKeys.projects(workspaceId);
 
-  return useMutation<void, PostgrestError, string, Context>({
+  return useMutation<void, MutationError, string, Context>({
     mutationFn: async (id) => {
       const { error } = await createClient()
         .from("projects")
@@ -121,13 +124,12 @@ export function useDeleteProject(workspaceId: string) {
       applyOptimistic<Project[]>(queryClient, queryKey, (projects) =>
         projects.filter((project) => project.id !== id),
       ),
-    onError: (_error, _id, context) =>
-      rollbackOptimistic(
-        queryClient,
-        queryKey,
-        context,
-        "프로젝트를 삭제하지 못했습니다.",
-      ),
+    onError: (error, _id, context) =>
+      rollbackOptimistic(queryClient, queryKey, context, {
+        error,
+        message: "프로젝트를 삭제하지 못했습니다.",
+      }),
+    onSuccess: (_data, id) => options?.onDeleted?.(id),
     onSettled: () => queryClient.invalidateQueries({ queryKey }),
   });
 }
