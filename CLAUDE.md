@@ -4,6 +4,15 @@
 
 팀용 이슈 트래커(Jira/Linear 스타일)이며 프론트엔드 포트폴리오 프로젝트다. 계획, 데이터 모델, 진행 상황은 `docs/PLAN.md`를 참고한다. 체크리스트 항목을 끝내면 거기에 체크한다.
 
+## 작업 방식
+
+- 사용자와는 한국어로 소통한다. 무엇을 할지와 왜 그렇게 하는지를 함께 설명하면서 진행한다.
+- 사용자가 "대기", "질문만" 등으로 멈추라고 하면 다음 단계를 진행하지 않고 답만 한다.
+- 구현 후 순서: lint·build 통과 → 가능하면 직접 동작 확인 → 사용자에게 번호 붙인 테스트 목록 전달 → 사용자 확인 후 커밋. 확인하지 못한 부분은 확인하지 못했다고 밝힌다.
+- 직접 동작 확인 방법: 로그인이 필요한 화면은 scratchpad에 프로젝트를 복사(`node_modules`는 `cp -cR`)하고 `lib/data/*`, `proxy.ts`를 가짜 데이터로 바꿔 다른 포트로 띄운 뒤, 헤드리스 Chrome(puppeteer-core + 설치된 Chrome, 임시 프로필)으로 콘솔 에러와 동작을 확인한다. 실제 프로젝트 파일은 바꾸지 않는다.
+- 원인을 설명할 때 추측과 확인된 사실을 구분한다. 가능하면 재현하거나 로그·응답 헤더·라이브러리 동작으로 확인한 뒤 고친다. 추측으로 고쳤다면 그렇게 밝힌다.
+- 사용자가 직접 하는 일: `git push`, PR 머지, `npx supabase db push`, Vercel·Supabase·GitHub 대시보드 설정. Supabase DB에 테스트 데이터를 쓰는 작업은 먼저 허락을 받고, 끝나면 지운다.
+
 ## 스택
 
 Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI 기반, Radix 아님), TanStack Query, dnd-kit, React Hook Form + Zod, Supabase (Auth/Postgres/RLS/Realtime), Vercel 배포.
@@ -77,7 +86,8 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 커밋 메시지와 PR 설명은 한국어로 쓴다. 접두사만 영어로 쓴다 (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`).
 - 예: `feat: Supabase 스키마, RLS 정책, DB 테스트 추가`
 - PR 설명은 소개하는 말투("~했습니다", "~입니다")를 쓰지 않는다. 명사형·개조식으로 사실만 짧게 전달한다. 예: "이슈 쿼리 키를 프로젝트 키와 분리. 프로젝트 이름 변경 시 이슈 목록 재요청 방지"
-- 기능마다 브랜치를 만들고 PR로 main에 합친다. push는 사용자가 직접 한다.
+- 코드 변경(기능, 버그 수정, 마이그레이션)은 브랜치를 만들고 PR로 main에 합친다. 문서만 바꾸는 작은 변경(CLAUDE.md, PLAN.md, README, 오타)은 브랜치 없이 main에 바로 커밋한다.
+- push와 PR 머지는 사용자가 직접 한다. main에 올라가면 Vercel이 자동으로 운영 배포한다.
 
 ## 작업 마무리 전
 
