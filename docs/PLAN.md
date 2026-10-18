@@ -72,7 +72,7 @@ proxy.ts                                             비로그인 리다이렉�
 - [x] 프로젝트 CRUD: TanStack Query 도입, 사이드바, 생성·이름 변경·삭제 (낙관적 업데이트)
 - [x] 이슈 CRUD (상태·우선순위·담당자), 이슈 목록·상세 (`/[workspace]/issue/TF-12`), 오프라인 처리
 - [x] 칸반 보드 + dnd-kit, 낙관적 업데이트 (목록/보드 탭, 키보드 드래그)
-- [ ] Vercel 배포, 환경 변수 설정
+- [x] Vercel 배포, 환경 변수 설정 (2026-10-18)
 
 ### 2주차: 협업과 실시간
 
@@ -88,6 +88,16 @@ proxy.ts                                             비로그인 리다이렉�
 - [ ] 데모 모드: 시드 데이터 워크스페이스, 원클릭 데모 로그인, 주기적 초기화
 - [ ] 빈 상태, 로딩 스켈레톤, 에러 바운더리, 반응형
 - [ ] README: 스크린샷/GIF, 아키텍처, 기술적 결정과 이유
+
+## 배포
+
+- **주소**: https://taskflow-board-tau.vercel.app
+- **플랫폼**: Vercel Hobby. GitHub `main` 머지 시 자동 배포, PR마다 Preview 배포
+- **함수 실행 지역**: `icn1`(서울). Supabase(서울)와 같은 지역. 기본값 `iad1`(미국 동부)에서는 DB 왕복이 쌓여 화면 이동에 2~3초 걸렸음. 응답 헤더 `x-vercel-id`의 두 번째 값으로 실행 지역 확인 (`icn1::icn1::...`)
+- **Vercel 환경 변수**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Config 타입, Production·Preview·Development). 빌드 시 코드에 포함되므로 변경 후 재배포 필요. Vercel의 Supabase 연동 기능은 사용하지 않음(비밀 키까지 저장되고 변수 이름이 다를 수 있음)
+- **Supabase Auth URL 설정**: Site URL은 배포 주소, Redirect URLs는 `https://taskflow-board-tau.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+- **Preview 배포에서는 로그인 불가**: Preview 주소가 Redirect URLs에 없음. 필요 시 와일드카드 주소 등록
+- **무료 플랜 주의**: Supabase 무료 프로젝트는 일정 기간 접속이 없으면 일시정지
 
 ## 검증
 
