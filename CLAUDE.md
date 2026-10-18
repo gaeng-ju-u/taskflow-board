@@ -66,6 +66,12 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 파일과 폴더: kebab-case (`issue-card.tsx`)
 - 컴포넌트와 타입: PascalCase, 훅: `use-*.ts` 파일에 `useXxx`
 
+## 배포
+
+- Vercel(https://taskflow-board-tau.vercel.app), `main` 머지 시 자동 배포. 함수 지역은 서울(`icn1`)로 유지한다. 상세는 `docs/PLAN.md`의 "배포".
+- 새 환경 변수를 추가하면 Vercel 프로젝트 설정에도 넣고 재배포해야 한다 (`.env.local`은 git에 없다).
+- 로그인 리다이렉트 주소를 바꾸면 Supabase Auth의 Redirect URLs에도 등록해야 한다.
+
 ## Git
 
 - 커밋 메시지와 PR 설명은 한국어로 쓴다. 접두사만 영어로 쓴다 (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`).
