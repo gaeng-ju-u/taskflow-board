@@ -26,6 +26,8 @@ import {
 // "담당자 없음"이 줄바꿈되기 때문이다. 내용에 맞추되 너무 긴 이름은 한 줄에서 말줄임한다.
 const MENU_WIDTH = "w-auto min-w-40 max-w-64";
 
+// 하나만 고르는 메뉴라 고르면 닫는다 (Base UI 라디오 항목의 closeOnClick 기본값은 false).
+
 // 목록 행에서는 아이콘만(compact), 상세·생성 화면에서는 아이콘과 이름을 함께 보여준다.
 type SelectProps<T> = {
   value: T;
@@ -66,7 +68,7 @@ export function StatusSelect({
           {STATUS_ORDER.map((status) => {
             const item = STATUS_META[status];
             return (
-              <DropdownMenuRadioItem key={status} value={status}>
+              <DropdownMenuRadioItem closeOnClick key={status} value={status}>
                 <item.icon className={item.className} />
                 <span className="truncate">{item.label}</span>
               </DropdownMenuRadioItem>
@@ -100,7 +102,11 @@ export function PrioritySelect({
           {PRIORITY_ORDER.map((priority) => {
             const item = PRIORITY_META[priority];
             return (
-              <DropdownMenuRadioItem key={priority} value={priority}>
+              <DropdownMenuRadioItem
+                closeOnClick
+                key={priority}
+                value={priority}
+              >
                 <item.icon className={item.className} />
                 <span className="truncate">{item.label}</span>
               </DropdownMenuRadioItem>
@@ -162,12 +168,16 @@ export function AssigneeSelect({
             onChange(next === UNASSIGNED ? null : (next as string))
           }
         >
-          <DropdownMenuRadioItem value={UNASSIGNED}>
+          <DropdownMenuRadioItem closeOnClick value={UNASSIGNED}>
             <UserRoundIcon className="text-muted-foreground" />
             <span className="truncate">담당자 없음</span>
           </DropdownMenuRadioItem>
           {members.map((member) => (
-            <DropdownMenuRadioItem key={member.id} value={member.id}>
+            <DropdownMenuRadioItem
+              closeOnClick
+              key={member.id}
+              value={member.id}
+            >
               <MemberAvatar member={member} />
               <span className="truncate">{member.name}</span>
             </DropdownMenuRadioItem>

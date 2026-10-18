@@ -54,7 +54,8 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 키보드 처리(Enter 저장, Esc 취소, 단축키)는 `event.nativeEvent.isComposing`이면 무시한다. 한글 조합 중의 Enter에 반응하면 마지막 글자가 한 번 더 입력된다.
 - 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
 - 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.
-- 드래그 앤 드롭(dnd-kit, `components/issues/issue-board.tsx`): `DndContext`에 고정 `id`를 준다(hydration 경고 방지). 놓은 뒤의 임시 배치는 저장 요청이 끝날 때까지 유지한다(놓자마자 지우면 카드가 원래 자리로 튄다). 순서는 앞뒤 카드의 중간값(`sortOrderBetween`)으로 옮긴 카드 하나만 수정한다. 키보드는 스페이스바로 집기·놓기, Enter로 열기, ←/→로 칸 이동.
+- 하나만 고르는 드롭다운(`DropdownMenuRadioItem`)은 `closeOnClick`을 준다. Base UI 기본값은 골라도 닫히지 않음이다.
+- 드래그 앤 드롭(dnd-kit, `components/issues/issue-board.tsx`): `DndContext`에 고정 `id`를 준다(hydration 경고 방지). 놓은 뒤의 임시 배치는 저장 요청이 끝날 때까지 유지한다(놓자마자 지우면 카드가 원래 자리로 튄다). 순서는 앞뒤 카드의 중간값(`sortOrderBetween`)으로 옮긴 카드 하나만 수정한다. 키보드는 스페이스바로 집기·놓기, Enter로 열기, ←/→로 칸 이동. 카드 안의 버튼은 `onPointerDown`에서 전파를 막아 드래그 시작을 막고, 카드 단축키는 `event.target === event.currentTarget`일 때만 처리한다(portal 메뉴의 React 이벤트도 카드로 올라온다).
 - 이미 적용된 마이그레이션은 수정하지 않고 새 마이그레이션을 추가한다. 스키마나 정책을 바꾸면 `supabase/tests/`도 갱신한다.
 - RLS 헬퍼 함수는 API에 노출되지 않는 `private` 스키마에 둔다. `security definer` 함수는 `set search_path = ''`로 만들고 이름을 스키마로 한정한다.
 - 환경 변수는 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (anon key 아님). `.env.local`의 값은 출력하지 않는다.

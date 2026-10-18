@@ -24,7 +24,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, UserRoundIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -50,7 +50,11 @@ import {
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { issuePath } from "./issue-list";
 import { PRIORITY_META, STATUS_META } from "./issue-meta";
-import { MemberAvatar } from "./property-selects";
+import {
+  AssigneeSelect,
+  MemberAvatar,
+  PrioritySelect,
+} from "./property-selects";
 
 // 보드의 칸 순서. 왼쪽에서 오른쪽으로 일이 진행되는 방향이다.
 const BOARD_STATUSES: IssueStatus[] = [
@@ -368,8 +372,9 @@ function SortableCard({
   workspaceSlug: string;
   members: Member[];
 }) {
-  // 낙관적으로 추가돼 아직 저장되지 않은 이슈는 옮길 수 없다.
   const router = useRouter();
+  const updateIssue = useUpdateIssue(issue.workspace_id);
+  // 낙관적으로 추가돼 아직 저장되지 않은 이슈는 옮기거나 수정할 수 없다.
   const pending = issue.number === PENDING_NUMBER;
   const {
     attributes,
@@ -390,6 +395,9 @@ function SortableCard({
       {...attributes}
       {...listeners}
       onKeyDown={(event) => {
+        // 카드 자체에 포커스가 있을 때만 카드 단축키로 처리한다. 카드 안 버튼(우선순위·담당자)이나
+        // 그 메뉴에서 누른 키는 그 버튼이 처리한다 (React 이벤트는 portal 메뉴에서도 카드로 올라온다).
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" && href && !isDragging) {
           router.push(href);
           return;
@@ -406,22 +414,51 @@ function SortableCard({
         projectKey={projectKey}
         members={members}
         href={href}
+        controls={
+          pending ? undefined : (
+            // 버튼을 누르는 순간 카드 드래그가 시작되지 않게, 누르기 이벤트를 카드까지 올리지 않는다.
+            // 메뉴(portal)에서 고르는 동작도 React 트리상 여기를 지나므로 함께 막힌다.
+            <div
+              className="flex items-center justify-between"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <PrioritySelect
+                compact
+                value={issue.priority}
+                onChange={(priority) =>
+                  updateIssue.mutate({ issue, patch: { priority } })
+                }
+              />
+              <AssigneeSelect
+                compact
+                value={issue.assignee_id}
+                members={members}
+                onChange={(assignee_id) =>
+                  updateIssue.mutate({ issue, patch: { assignee_id } })
+                }
+              />
+            </div>
+          )
+        }
       />
     </div>
   );
 }
 
+// controls가 없으면(끌고 있는 카드의 미리보기, 저장 전 카드) 같은 자리에 아이콘만 보여준다.
 function IssueCard({
   issue,
   projectKey,
   members,
   href,
+  controls,
   className,
 }: {
   issue: Issue;
   projectKey: string;
   members: Member[];
   href?: string;
+  controls?: React.ReactNode;
   className?: string;
 }) {
   const priority = PRIORITY_META[issue.priority];
@@ -431,18 +468,13 @@ function IssueCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border bg-card p-3 text-card-foreground",
+        "flex flex-col gap-2 rounded-lg border bg-card p-3 pb-1.5 text-card-foreground",
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-xs text-muted-foreground">
-          {pending
-            ? `${projectKey}-…`
-            : formatIssueRef(projectKey, issue.number)}
-        </span>
-        {assignee && <MemberAvatar member={assignee} />}
-      </div>
+      <span className="font-mono text-xs text-muted-foreground">
+        {pending ? `${projectKey}-…` : formatIssueRef(projectKey, issue.number)}
+      </span>
       {href ? (
         // 카드 전체가 드래그 손잡이라 링크는 키보드 포커스에서 뺀다. 키보드로는 카드에서 Enter로 연다.
         <Link
@@ -458,10 +490,22 @@ function IssueCard({
           {issue.title}
         </span>
       )}
-      <priority.icon
-        aria-label={priority.label}
-        className={cn("size-4", priority.className)}
-      />
+      {controls ?? (
+        <div className="flex h-8 items-center justify-between px-2">
+          <priority.icon
+            aria-label={priority.label}
+            className={cn("size-4", priority.className)}
+          />
+          {assignee ? (
+            <MemberAvatar member={assignee} />
+          ) : (
+            <UserRoundIcon
+              aria-label="담당자 없음"
+              className="size-4 text-muted-foreground"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
