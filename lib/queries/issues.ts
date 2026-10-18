@@ -24,7 +24,15 @@ import {
 } from "./optimistic";
 
 export type IssuePatch = Partial<
-  Pick<Issue, "title" | "description" | "status" | "priority" | "assignee_id">
+  Pick<
+    Issue,
+    | "title"
+    | "description"
+    | "status"
+    | "priority"
+    | "assignee_id"
+    | "sort_order"
+  >
 >;
 
 // 낙관적으로 추가한 이슈는 번호가 아직 없다 (DB 트리거가 발급한다).
