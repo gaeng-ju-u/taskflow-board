@@ -68,3 +68,11 @@ export function parseIssueRef(ref: string) {
 export function formatIssueRef(projectKey: string, number: number) {
   return `${projectKey}-${number}`;
 }
+
+// 두 카드 사이에 들어갈 순서값. 옮긴 카드 하나만 수정하면 되도록 앞뒤 값의 중간을 쓴다.
+// 같은 자리에 수십 번 넣으면 실수 정밀도가 부족해질 수 있지만, 이 앱의 사용량에서는 문제되지 않는다.
+export function sortOrderBetween(before?: number, after?: number) {
+  if (before === undefined) return after === undefined ? 0 : after - 1;
+  if (after === undefined) return before + 1;
+  return (before + after) / 2;
+}
