@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/components/auth/user-menu";
+import { MembersNavLink } from "@/components/members/members-nav-link";
 import { ProjectNav } from "@/components/projects/project-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/data/auth";
@@ -28,6 +29,11 @@ export default function WorkspaceLayout({
         <Suspense fallback={<NavSkeleton />}>
           <SidebarProjects params={params} />
         </Suspense>
+        <div className="mt-auto border-t p-2">
+          <Suspense fallback={<div className="h-8" />}>
+            <SidebarMembersLink params={params} />
+          </Suspense>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -44,7 +50,7 @@ export default function WorkspaceLayout({
                 <div className="size-8 animate-pulse rounded-full bg-muted" />
               }
             >
-              <CurrentUserMenu />
+              <CurrentUserMenu params={params} />
             </Suspense>
           </div>
         </header>
@@ -85,7 +91,15 @@ async function SidebarProjects({ params }: { params: Params }) {
   return <ProjectNav workspace={workspace} initialProjects={projects} />;
 }
 
-async function CurrentUserMenu() {
-  const user = await getCurrentUser();
-  return <UserMenu user={user} />;
+async function SidebarMembersLink({ params }: { params: Params }) {
+  const { workspace: slug } = await params;
+  return <MembersNavLink workspaceSlug={slug} />;
+}
+
+async function CurrentUserMenu({ params }: { params: Params }) {
+  const [{ workspace: slug }, user] = await Promise.all([
+    params,
+    getCurrentUser(),
+  ]);
+  return <UserMenu user={user} workspaceSlug={slug} />;
 }

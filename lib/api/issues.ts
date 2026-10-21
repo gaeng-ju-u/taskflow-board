@@ -35,29 +35,6 @@ export async function listIssues(supabase: Supabase, projectId: string) {
   return data;
 }
 
-export type Member = {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
-};
-
-// 담당자 선택과 아바타 표시용. profiles는 같은 워크스페이스 멤버끼리만 보이도록 RLS가 걸려 있다.
-export async function listMembers(supabase: Supabase, workspaceId: string) {
-  const { data, error } = await supabase
-    .from("workspace_members")
-    .select("profiles(id, name, avatar_url)")
-    .eq("workspace_id", workspaceId)
-    .order("created_at");
-  if (error) throw error;
-  return data
-    .flatMap((row) => (row.profiles ? [row.profiles] : []))
-    .map((profile): Member => ({
-      id: profile.id,
-      name: profile.name,
-      avatarUrl: profile.avatar_url,
-    }));
-}
-
 // "TF-12" 형식의 이슈 식별자. URL에서 이슈를 찾을 때 쓴다.
 export function parseIssueRef(ref: string) {
   const match = /^([A-Za-z][A-Za-z0-9]{1,4})-(\d+)$/.exec(ref);

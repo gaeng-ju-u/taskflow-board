@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
-import { getIssueByRef, getMembers } from "@/lib/data/issues";
+import { getIssueByRef } from "@/lib/data/issues";
+import { getMembers } from "@/lib/data/members";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
 
 export default function IssuePage({

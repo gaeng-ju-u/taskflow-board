@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, UsersIcon } from "lucide-react";
+import Link from "next/link";
 
 import { signOut } from "@/app/(app)/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,9 +15,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { membersPath } from "@/lib/api/members";
 import type { CurrentUser } from "@/lib/data/auth";
 
-export function UserMenu({ user }: { user: CurrentUser }) {
+export function UserMenu({
+  user,
+  workspaceSlug,
+}: {
+  user: CurrentUser;
+  workspaceSlug: string;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -44,6 +52,10 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href={membersPath(workspaceSlug)} />}>
+          <UsersIcon />
+          멤버
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => signOut()}>
           <LogOutIcon />
           로그아웃

@@ -13,7 +13,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { IssuePriority, IssueStatus, Member } from "@/lib/api/issues";
+import type { IssuePriority, IssueStatus } from "@/lib/api/issues";
+import type { Member } from "@/lib/api/members";
 
 import {
   PRIORITY_META,
