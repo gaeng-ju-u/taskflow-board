@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Project } from "@/lib/api/projects";
-import type { IssuePriority, IssueStatus, Member } from "@/lib/api/issues";
+import type { IssuePriority, IssueStatus } from "@/lib/api/issues";
+import type { Member } from "@/lib/api/members";
 import { useCreateIssue } from "@/lib/queries/issues";
 import { createIssueSchema } from "@/lib/validations/issue";
 

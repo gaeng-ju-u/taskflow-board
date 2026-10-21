@@ -20,13 +20,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { formatIssueRef, type Issue, type Member } from "@/lib/api/issues";
-import {
-  useDeleteIssue,
-  useIssue,
-  useMembers,
-  useUpdateIssue,
-} from "@/lib/queries/issues";
+import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import type { Member } from "@/lib/api/members";
+import { useDeleteIssue, useIssue, useUpdateIssue } from "@/lib/queries/issues";
+import { useMembers } from "@/lib/queries/members";
 import {
   issueDescriptionSchema,
   issueTitleSchema,

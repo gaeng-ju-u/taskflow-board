@@ -7,9 +7,7 @@ import {
   formatIssueRef,
   ISSUE_COLUMNS,
   listIssues,
-  listMembers,
   type Issue,
-  type Member,
 } from "@/lib/api/issues";
 import { createClient } from "@/lib/supabase/client";
 import type { CreateIssueInput } from "@/lib/validations/issue";
@@ -66,14 +64,6 @@ export function useIssue(
       if (error) throw error;
       return data;
     },
-    initialData,
-  });
-}
-
-export function useMembers(workspaceId: string, initialData?: Member[]) {
-  return useQuery({
-    queryKey: queryKeys.members(workspaceId),
-    queryFn: () => listMembers(createClient(), workspaceId),
     initialData,
   });
 }

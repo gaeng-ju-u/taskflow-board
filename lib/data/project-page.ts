@@ -1,6 +1,7 @@
 import "server-only";
 
-import { getIssues, getMembers } from "@/lib/data/issues";
+import { getIssues } from "@/lib/data/issues";
+import { getMembers } from "@/lib/data/members";
 import { getProjectByKey } from "@/lib/data/projects";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
 

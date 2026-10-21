@@ -4,14 +4,15 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { formatIssueRef, type Issue, type Member } from "@/lib/api/issues";
+import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import {
   PENDING_NUMBER,
   useIssues,
-  useMembers,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useMembers } from "@/lib/queries/members";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { STATUS_META, STATUS_ORDER } from "./issue-meta";

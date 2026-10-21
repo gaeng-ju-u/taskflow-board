@@ -518,6 +518,20 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { invite_token: string }; Returns: string }
+      get_invitation: {
+        Args: { invite_token: string }
+        Returns: {
+          accepted_at: string
+          email: string
+          expires_at: string
+          inviter_name: string
+          is_expired: boolean
+          is_member: boolean
+          role: Database["public"]["Enums"]["workspace_role"]
+          workspace_name: string
+          workspace_slug: string
+        }[]
+      }
       validate_issue_refs: {
         Args: { issue: Database["public"]["Tables"]["issues"]["Row"] }
         Returns: undefined
