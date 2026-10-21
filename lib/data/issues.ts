@@ -3,20 +3,11 @@ import "server-only";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
-import {
-  ISSUE_COLUMNS,
-  listIssues,
-  listMembers,
-  parseIssueRef,
-} from "@/lib/api/issues";
+import { ISSUE_COLUMNS, listIssues, parseIssueRef } from "@/lib/api/issues";
 import { createClient } from "@/lib/supabase/server";
 
 export const getIssues = cache(async (projectId: string) =>
   listIssues(await createClient(), projectId),
-);
-
-export const getMembers = cache(async (workspaceId: string) =>
-  listMembers(await createClient(), workspaceId),
 );
 
 // "TF-12" → 해당 워크스페이스의 TF 프로젝트에서 12번 이슈. 없거나 권한이 없으면 404.

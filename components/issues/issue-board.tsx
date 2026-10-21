@@ -37,15 +37,15 @@ import {
   sortOrderBetween,
   type Issue,
   type IssueStatus,
-  type Member,
 } from "@/lib/api/issues";
+import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import {
   PENDING_NUMBER,
   useIssues,
-  useMembers,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useMembers } from "@/lib/queries/members";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { issuePath } from "./issue-list";
