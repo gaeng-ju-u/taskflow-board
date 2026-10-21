@@ -95,7 +95,8 @@ proxy.ts                                             비로그인 리다이렉�
 - **플랫폼**: Vercel Hobby. GitHub `main` 머지 시 자동 배포, PR마다 Preview 배포
 - **함수 실행 지역**: `icn1`(서울). Supabase(서울)와 같은 지역. 기본값 `iad1`(미국 동부)에서는 DB 왕복이 쌓여 화면 이동에 2~3초 걸렸음. 응답 헤더 `x-vercel-id`의 두 번째 값으로 실행 지역 확인 (`icn1::icn1::...`)
 - **Vercel 환경 변수**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Config 타입, Production·Preview·Development). 빌드 시 코드에 포함되므로 변경 후 재배포 필요. Vercel의 Supabase 연동 기능은 사용하지 않음(비밀 키까지 저장되고 변수 이름이 다를 수 있음)
-- **Supabase Auth URL 설정**: Site URL은 배포 주소, Redirect URLs는 `https://taskflow-board-tau.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`
+- **Supabase Auth URL 설정**: Site URL은 배포 주소. Redirect URLs는 `https://taskflow-board-tau.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`, `http://localhost:3000/**`
+  - 로그인 요청 주소에는 `?next=...`가 붙는다. Site URL과 도메인이 다른 localhost는 Redirect URLs와 전체 주소로 비교되어 `/auth/callback`만으로는 맞지 않고, Site URL(배포 주소)로 보내진다. `/**` 와일드카드로 해결 (2026-10-19)
 - **Preview 배포에서는 로그인 불가**: Preview 주소가 Redirect URLs에 없음. 필요 시 와일드카드 주소 등록
 - **무료 플랜 주의**: Supabase 무료 프로젝트는 일정 기간 접속이 없으면 일시정지
 
@@ -110,14 +111,16 @@ proxy.ts                                             비로그인 리다이렉�
 
 ## 알려진 문제
 
-### 개발 서버 재시작 직후 페이지 새로고침 반복 (원인 미확정, 2026-10-15)
+### 개발 서버 무한 새로고침 (발생 원리 확인, 발생 조건 미확정, 2026-10-15 / 2026-10-21 갱신)
 
-- **증상**: `npm run dev` 재시작 후 워크스페이스 화면이 약 0.1초 간격으로 계속 새로고침된다(깜빡임). 브라우저 콘솔에 `The server could not finish this Suspense boundary`가 반복된다.
-- **해결 방법(임시)**: 브라우저의 정지(X) 버튼을 누르거나 사이트 데이터를 지우면 멈추고, 이후에는 정상 동작한다.
-- **확인된 것**
-  - Suspense 에러는 원인이 아니라 결과다. 스트리밍 도중 새로고침되어 끝나지 않은 경계마다 찍힌다.
-  - 앱 코드에는 새로고침·이동을 일으키는 코드가 없다.
-  - `next-instant-navigation-testing` 쿠키는 없었다(가설 기각).
-  - 헤드리스 Chrome에서는 재현되지 않았다: 콜드 서버, 탭 2개, 탭을 연 채 서버 재시작, 실제 세션, 큰(조각난) 쿠키, 토큰 갱신.
-- **다음에 발생하면**: 정지하기 전에 DevTools Network(Preserve log, Doc 필터)에서 반복되는 요청의 **Initiator**를 확인하고, Application → Service workers에 등록된 것이 있는지 본다. 로그(`.next/dev/logs/next-development.log`)는 서버 재시작 시 지워지므로 서버를 켠 채로 확인한다.
-- **후보 실험**: `next.config.ts`의 `partialPrefetching`을 끄고 재시작을 여러 번 반복해 재발 여부를 비교한다.
+- **증상**: 워크스페이스 화면이 약 0.1초 간격으로 계속 새로고침된다(깜빡임). 서버 로그에 `✓ Compiled in 0~3ms`, 브라우저 콘솔에 `The server could not finish this Suspense boundary`가 반복된다.
+- **해결 방법(임시)**: 그 브라우저의 사이트 데이터(캐시)를 지우고 다시 접속하거나, 개발 서버를 재시작한다.
+- **발생 원리 (재현으로 확인)**
+  - 고장 상태의 개발 서버는 앱 기본 청크 목록을 구독(`turbopack-subscribe`)하는 브라우저에 `"type":"restart"` 업데이트를 보낸다. Turbopack 브라우저 런타임은 `restart`를 받으면 페이지 전체를 새로고침하고, 새 페이지가 다시 구독해 반복된다.
+  - 확인 방법: 서버를 켠 채 `/_next/hmr` 웹소켓에 접속해 메인 청크 목록을 구독하고 응답에 `restart`가 오는지 본다. 정상이면 메시지가 오지 않는다.
+  - `Compiled` 로그는 구독할 때 첫 응답으로 실제 업데이트가 갈 때 찍히는 것이다(`hot-reloader-turbopack.js`). 파일 변경과는 무관하다. Suspense 에러는 불러오는 도중 새로고침되어 생기는 결과다.
+  - 고장 상태에서는 쿠키 없는 새 브라우저도 반복된다. 서비스 워커는 없었다.
+- **원인이 아닌 것 (실험으로 제외)**: 디스크 캐시(`.next/dev/cache`, 같은 캐시로 재시작 6회 정상), 서버를 켜는 방법(VS Code 터미널 환경 변수), 첫 요청 순서(`/login`, `/auth/continue`, 워크스페이스), 탭을 연 채 재시작(18회), 서버가 꺼진 동안 파일 수정(5회), 로그인한 상태로 사용
+- **확인된 단서**: 2026-10-21에는 사용자 서버가 브라우저 접속 전에는 정상이었고, 사용자의 일반 Chrome 탭이 처음 접속한 직후 고장 상태가 됐다. 시크릿 창에서는 정상이었다.
+- **다음에 발생하면**: 서버를 재시작하기 전에, 그 브라우저의 개발자 도구 Network → `hmr` → Messages 맨 위에서 브라우저가 보낸 `turbopack-subscribe` 목록을 캡처하고 `chrome://extensions` 목록을 확인한다(확장 프로그램 의심).
+- **참고**: Next 16.4.0 사용 중. 16.4.2에 Turbopack 상태 관련 수정이 있으나 이 증상과 맞는 항목은 확인하지 못했다.
