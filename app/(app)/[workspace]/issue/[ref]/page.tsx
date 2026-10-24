@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { getIssueByRef } from "@/lib/data/issues";
+import { getLabels } from "@/lib/data/labels";
 import { getMembers } from "@/lib/data/members";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
 
@@ -32,9 +33,10 @@ async function IssueContent({
 }) {
   const { workspace: slug, ref } = await params;
   const workspace = await getWorkspaceBySlug(slug);
-  const [{ issue, project }, members] = await Promise.all([
+  const [{ issue, project }, members, labels] = await Promise.all([
     getIssueByRef(workspace.id, ref),
     getMembers(workspace.id),
+    getLabels(workspace.id),
   ]);
   return (
     <IssueDetail
@@ -42,6 +44,7 @@ async function IssueContent({
       project={project}
       initialIssue={issue}
       initialMembers={members}
+      initialLabels={labels}
     />
   );
 }

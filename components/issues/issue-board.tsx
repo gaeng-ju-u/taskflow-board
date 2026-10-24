@@ -31,6 +31,8 @@ import { useMemo, useState } from "react";
 
 import { cn } from "cn";
 
+import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
+import { issueLabels, LabelChips } from "@/components/labels/label-chip";
 import { Button } from "@/components/ui/button";
 import {
   formatIssueRef,
@@ -38,6 +40,7 @@ import {
   type Issue,
   type IssueStatus,
 } from "@/lib/api/issues";
+import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import {
@@ -45,6 +48,7 @@ import {
   useIssues,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
@@ -110,11 +114,13 @@ export function IssueBoard({
   project,
   initialIssues,
   initialMembers,
+  initialLabels,
 }: {
   workspaceSlug: string;
   project: Project;
   initialIssues: Issue[];
   initialMembers: Member[];
+  initialLabels: Label[];
 }) {
   const { data: issues = initialIssues } = useIssues(
     project.workspace_id,
@@ -124,6 +130,10 @@ export function IssueBoard({
   const { data: members = initialMembers } = useMembers(
     project.workspace_id,
     initialMembers,
+  );
+  const { data: labels = initialLabels } = useLabels(
+    project.workspace_id,
+    initialLabels,
   );
   const updateIssue = useUpdateIssue(project.workspace_id);
 
@@ -302,6 +312,7 @@ export function IssueBoard({
                       projectKey={project.key}
                       workspaceSlug={workspaceSlug}
                       members={members}
+                      labels={labels}
                     />
                   );
                 })}
@@ -316,6 +327,7 @@ export function IssueBoard({
               issue={activeIssue}
               projectKey={project.key}
               members={members}
+              labels={labels}
               className="rotate-2 shadow-lg"
             />
           )}
@@ -366,11 +378,13 @@ function SortableCard({
   projectKey,
   workspaceSlug,
   members,
+  labels,
 }: {
   issue: Issue;
   projectKey: string;
   workspaceSlug: string;
   members: Member[];
+  labels: Label[];
 }) {
   const router = useRouter();
   const updateIssue = useUpdateIssue(issue.workspace_id);
@@ -413,6 +427,7 @@ function SortableCard({
         issue={issue}
         projectKey={projectKey}
         members={members}
+        labels={labels}
         href={href}
         controls={
           pending ? undefined : (
@@ -429,14 +444,17 @@ function SortableCard({
                   updateIssue.mutate({ issue, patch: { priority } })
                 }
               />
-              <AssigneeSelect
-                compact
-                value={issue.assignee_id}
-                members={members}
-                onChange={(assignee_id) =>
-                  updateIssue.mutate({ issue, patch: { assignee_id } })
-                }
-              />
+              <div className="flex items-center">
+                <IssueLabelPicker compact issue={issue} labels={labels} />
+                <AssigneeSelect
+                  compact
+                  value={issue.assignee_id}
+                  members={members}
+                  onChange={(assignee_id) =>
+                    updateIssue.mutate({ issue, patch: { assignee_id } })
+                  }
+                />
+              </div>
             </div>
           )
         }
@@ -450,6 +468,7 @@ function IssueCard({
   issue,
   projectKey,
   members,
+  labels,
   href,
   controls,
   className,
@@ -457,6 +476,7 @@ function IssueCard({
   issue: Issue;
   projectKey: string;
   members: Member[];
+  labels: Label[];
   href?: string;
   controls?: React.ReactNode;
   className?: string;
@@ -490,6 +510,7 @@ function IssueCard({
           {issue.title}
         </span>
       )}
+      <LabelChips labels={issueLabels(issue.issue_labels, labels)} max={3} />
       {controls ?? (
         <div className="flex h-8 items-center justify-between px-2">
           <priority.icon

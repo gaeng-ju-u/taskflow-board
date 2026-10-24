@@ -10,6 +10,8 @@ export const queryKeys = {
     [...queryKeys.workspace(workspaceId), "members"] as const,
   invitations: (workspaceId: string) =>
     [...queryKeys.workspace(workspaceId), "invitations"] as const,
+  labels: (workspaceId: string) =>
+    [...queryKeys.workspace(workspaceId), "labels"] as const,
   issues: (workspaceId: string) =>
     [...queryKeys.workspace(workspaceId), "issues"] as const,
   issueList: (workspaceId: string, projectId: string) =>

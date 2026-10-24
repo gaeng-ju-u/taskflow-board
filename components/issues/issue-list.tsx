@@ -3,8 +3,15 @@
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
+import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
+import {
+  issueLabels,
+  LabelChips,
+  LabelDot,
+} from "@/components/labels/label-chip";
 import { Button } from "@/components/ui/button";
 import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import {
@@ -12,6 +19,7 @@ import {
   useIssues,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
@@ -31,11 +39,13 @@ export function IssueList({
   project,
   initialIssues,
   initialMembers,
+  initialLabels,
 }: {
   workspaceSlug: string;
   project: Project;
   initialIssues: Issue[];
   initialMembers: Member[];
+  initialLabels: Label[];
 }) {
   const { data: issues = initialIssues } = useIssues(
     project.workspace_id,
@@ -45,6 +55,10 @@ export function IssueList({
   const { data: members = initialMembers } = useMembers(
     project.workspace_id,
     initialMembers,
+  );
+  const { data: labels = initialLabels } = useLabels(
+    project.workspace_id,
+    initialLabels,
   );
 
   const groups = STATUS_ORDER.map((status) => ({
@@ -98,6 +112,7 @@ export function IssueList({
                       projectKey={project.key}
                       workspaceSlug={workspaceSlug}
                       members={members}
+                      labels={labels}
                     />
                   ))}
                 </ul>
@@ -115,19 +130,22 @@ function IssueRow({
   projectKey,
   workspaceSlug,
   members,
+  labels,
 }: {
   issue: Issue;
   projectKey: string;
   workspaceSlug: string;
   members: Member[];
+  labels: Label[];
 }) {
   const updateIssue = useUpdateIssue(issue.workspace_id);
   // 낙관적으로 추가된 이슈는 번호가 없어 아직 상세 화면으로 갈 수 없다.
   const pending = issue.number === PENDING_NUMBER;
   const ref = formatIssueRef(projectKey, issue.number);
+  const attached = issueLabels(issue.issue_labels, labels);
 
   return (
-    <li className="flex h-11 items-center gap-1 border-b px-4 hover:bg-muted/40">
+    <li className="group flex h-11 items-center gap-1 border-b px-4 hover:bg-muted/40">
       <PrioritySelect
         compact
         value={issue.priority}
@@ -154,6 +172,35 @@ function IssueRow({
         >
           {issue.title}
         </Link>
+      )}
+      <LabelChips
+        labels={attached}
+        max={2}
+        className="hidden shrink-0 flex-nowrap sm:flex"
+      />
+      {/* 좁은 화면에서는 칩 대신 색 점만 보여준다. */}
+      {attached.length > 0 && (
+        <span
+          className="flex shrink-0 gap-0.5 sm:hidden"
+          title={attached.map((label) => label.name).join(", ")}
+        >
+          {attached.map((label) => (
+            <LabelDot key={label.id} color={label.color} />
+          ))}
+        </span>
+      )}
+      {!pending && (
+        <IssueLabelPicker
+          compact
+          issue={issue}
+          labels={labels}
+          // 라벨이 없는 행은 마우스를 올리거나 포커스할 때만 버튼을 보여준다 (터치 화면에서는 항상 보임).
+          className={
+            attached.length === 0
+              ? "sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:data-popup-open:opacity-100"
+              : undefined
+          }
+        />
       )}
       <AssigneeSelect
         compact

@@ -56,7 +56,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 필터, 정렬, 그룹 상태는 URL search params에 둔다.
 - `'use client'`는 상호작용이 필요한 말단 컴포넌트에만 붙인다.
 - 인증 라우팅 가드는 `proxy.ts`에서 한다 (middleware 아님).
-- 색은 토큰 클래스(`bg-background`, `text-muted-foreground` 등)로만 쓴다. `bg-white`, `text-gray-900` 같은 고정 색은 다크모드를 깨뜨린다.
+- 색은 토큰 클래스(`bg-background`, `text-muted-foreground` 등)로만 쓴다. `bg-white`, `text-gray-900` 같은 고정 색은 다크모드를 깨뜨린다. 예외: 라벨 색처럼 사용자가 고른 데이터 색은 인라인 스타일로 색 점에만 쓰고, 글자·테두리는 토큰 색을 쓴다(`components/labels/label-chip.tsx`).
 - 테마는 `lib/theme.ts`의 인라인 스크립트와 `hooks/use-theme.ts`로 처리한다 (next-themes 미사용). 클래스 병합은 `cn` 패키지의 `cn()`을 쓴다.
 - shadcn 컴포넌트를 다른 요소로 렌더할 때는 `asChild`가 아니라 Base UI의 `render` prop을 쓴다.
 - 입력 검증은 Zod 스키마로 하고, 폼과 뮤테이션에서 같은 스키마를 공유한다.
@@ -64,6 +64,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
 - 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.
 - 하나만 고르는 드롭다운(`DropdownMenuRadioItem`)은 `closeOnClick`을 준다. Base UI 기본값은 골라도 닫히지 않음이다.
+- 검색칸이 필요한 선택 창(라벨 선택 등)은 DropdownMenu가 아니라 Popover로 만든다. Base UI Menu 안의 입력칸은 메뉴의 글자 단축키와 충돌한다(`components/labels/label-picker.tsx`).
 - 드래그 앤 드롭(dnd-kit, `components/issues/issue-board.tsx`): `DndContext`에 고정 `id`를 준다(hydration 경고 방지). 놓은 뒤의 임시 배치는 저장 요청이 끝날 때까지 유지한다(놓자마자 지우면 카드가 원래 자리로 튄다). 순서는 앞뒤 카드의 중간값(`sortOrderBetween`)으로 옮긴 카드 하나만 수정한다. 키보드는 스페이스바로 집기·놓기, Enter로 열기, ←/→로 칸 이동. 카드 안의 버튼은 `onPointerDown`에서 전파를 막아 드래그 시작을 막고, 카드 단축키는 `event.target === event.currentTarget`일 때만 처리한다(portal 메뉴의 React 이벤트도 카드로 올라온다).
 - 이미 적용된 마이그레이션은 수정하지 않고 새 마이그레이션을 추가한다. 스키마나 정책을 바꾸면 `supabase/tests/`도 갱신한다.
 - RLS 헬퍼 함수는 API에 노출되지 않는 `private` 스키마에 둔다. `security definer` 함수는 `set search_path = ''`로 만들고 이름을 스키마로 한정한다.
