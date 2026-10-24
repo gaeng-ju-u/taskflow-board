@@ -43,6 +43,7 @@ import {
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
+import { filterIssues } from "@/lib/issue-filters";
 import {
   PENDING_NUMBER,
   useIssues,
@@ -52,6 +53,7 @@ import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
+import { IssueFilterBar } from "./issue-filter-bar";
 import { issuePath } from "./issue-list";
 import { PRIORITY_META, STATUS_META } from "./issue-meta";
 import {
@@ -59,6 +61,7 @@ import {
   MemberAvatar,
   PrioritySelect,
 } from "./property-selects";
+import { useIssueFilters } from "./use-issue-filters";
 
 // 보드의 칸 순서. 왼쪽에서 오른쪽으로 일이 진행되는 방향이다.
 const BOARD_STATUSES: IssueStatus[] = [
@@ -112,12 +115,14 @@ const boardKeyboardCoordinates: KeyboardCoordinateGetter = (event, args) => {
 export function IssueBoard({
   workspaceSlug,
   project,
+  currentUserId,
   initialIssues,
   initialMembers,
   initialLabels,
 }: {
   workspaceSlug: string;
   project: Project;
+  currentUserId: string;
   initialIssues: Issue[];
   initialMembers: Member[];
   initialLabels: Label[];
@@ -141,7 +146,17 @@ export function IssueBoard({
     () => new Map(issues.map((issue) => [issue.id, issue])),
     [issues],
   );
-  const cached = useMemo(() => groupIssues(issues), [issues]);
+  // 필터는 칸에 보이는 카드만 거른다. 드래그로 옮기면 보이는 앞뒤 카드 기준으로 순서가 정해진다.
+  const { filters, setFilters } = useIssueFilters();
+  const labelIds = useMemo(
+    () => new Set(labels.map((label) => label.id)),
+    [labels],
+  );
+  const visible = useMemo(
+    () => filterIssues(issues, filters, { currentUserId, labelIds }),
+    [issues, filters, currentUserId, labelIds],
+  );
+  const cached = useMemo(() => groupIssues(visible), [visible]);
   // 드래그 중과 놓은 뒤 저장이 끝날 때까지는 이 배치를 보여준다. 놓자마자 지우면 캐시에 반영되기 전
   // 한 프레임 동안 카드가 원래 자리로 튀었다가 돌아온다 (그 자리 편집 필드와 같은 이유).
   const [draft, setDraft] = useState<Columns | null>(null);
@@ -255,20 +270,30 @@ export function IssueBoard({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between px-6 pb-3">
-        <span className="text-sm text-muted-foreground">
-          이슈 {issues.length}개
-        </span>
-        <CreateIssueDialog
-          project={project}
-          members={members}
-          trigger={
-            <Button size="sm">
-              <PlusIcon />새 이슈
-            </Button>
-          }
-        />
-      </div>
+      <IssueFilterBar
+        filters={filters}
+        setFilters={setFilters}
+        members={members}
+        labels={labels}
+        currentUserId={currentUserId}
+        showDisplayOptions={false}
+        summary={
+          visible.length === issues.length
+            ? `이슈 ${issues.length}개`
+            : `이슈 ${visible.length} / ${issues.length}개`
+        }
+        actions={
+          <CreateIssueDialog
+            project={project}
+            members={members}
+            trigger={
+              <Button size="sm">
+                <PlusIcon />새 이슈
+              </Button>
+            }
+          />
+        }
+      />
 
       {/* id를 고정해야 서버와 클라이언트의 접근성 속성 id가 같아져 hydration 경고가 나지 않는다. */}
       <DndContext
