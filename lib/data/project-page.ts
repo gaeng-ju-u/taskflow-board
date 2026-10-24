@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getIssues } from "@/lib/data/issues";
+import { getLabels } from "@/lib/data/labels";
 import { getMembers } from "@/lib/data/members";
 import { getProjectByKey } from "@/lib/data/projects";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
@@ -18,9 +19,10 @@ export async function loadProject(params: ProjectParams) {
 
 export async function loadProjectIssues(params: ProjectParams) {
   const { workspace, project } = await loadProject(params);
-  const [issues, members] = await Promise.all([
+  const [issues, members, labels] = await Promise.all([
     getIssues(project.id),
     getMembers(workspace.id),
+    getLabels(workspace.id),
   ]);
-  return { workspace, project, issues, members };
+  return { workspace, project, issues, members, labels };
 }

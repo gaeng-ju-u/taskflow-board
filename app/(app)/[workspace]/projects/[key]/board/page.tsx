@@ -27,7 +27,7 @@ export default function ProjectBoardPage({
 }
 
 async function ProjectBoard({ params }: { params: Params }) {
-  const { workspace, project, issues, members } =
+  const { workspace, project, issues, members, labels } =
     await loadProjectIssues(params);
   return (
     <IssueBoard
@@ -35,6 +35,7 @@ async function ProjectBoard({ params }: { params: Params }) {
       project={project}
       initialIssues={issues}
       initialMembers={members}
+      initialLabels={labels}
     />
   );
 }

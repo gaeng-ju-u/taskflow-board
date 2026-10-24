@@ -106,6 +106,7 @@ export function useCreateIssue(workspaceId: string, projectKey: string) {
             sort_order: nextSortOrder(queryClient, workspaceId, input),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
+            issue_labels: [],
           },
         ],
       ),
@@ -197,6 +198,78 @@ export function useUpdateIssue(workspaceId: string) {
             ? "담당자는 워크스페이스 멤버여야 합니다."
             : "이슈를 수정하지 못했습니다.",
         },
+      );
+    },
+    onSettled: (_data, _error, { issue }) =>
+      Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.issueList(workspaceId, issue.project_id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.issue(workspaceId, issue.id),
+        }),
+      ]),
+  });
+}
+
+// 이슈에 라벨을 붙이거나 뗀다. 목록과 상세 캐시를 함께 바꾼다.
+export function useToggleIssueLabel(workspaceId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    void,
+    MutationError,
+    { issue: Issue; labelId: string; attach: boolean },
+    UpdateContext
+  >({
+    mutationFn: async ({ issue, labelId, attach }) => {
+      const table = createClient().from("issue_labels");
+      // 붙이기는 이미 붙어 있으면 무시한다 (빠르게 두 번 눌러도 중복 키 오류가 나지 않게).
+      const { error } = attach
+        ? await table.upsert(
+            { issue_id: issue.id, label_id: labelId },
+            { ignoreDuplicates: true },
+          )
+        : await table.delete().eq("issue_id", issue.id).eq("label_id", labelId);
+      if (error) throw error;
+    },
+    onMutate: async ({ issue, labelId, attach }) => {
+      const update = (item: Issue): Issue =>
+        item.id !== issue.id
+          ? item
+          : {
+              ...item,
+              issue_labels: attach
+                ? [
+                    ...item.issue_labels.filter((l) => l.label_id !== labelId),
+                    { label_id: labelId },
+                  ]
+                : item.issue_labels.filter((l) => l.label_id !== labelId),
+            };
+      return {
+        list: await applyOptimistic<Issue[]>(
+          queryClient,
+          queryKeys.issueList(workspaceId, issue.project_id),
+          (issues) => issues.map(update),
+        ),
+        detail: await applyOptimistic<Issue | null>(
+          queryClient,
+          queryKeys.issue(workspaceId, issue.id),
+          (current) => (current ? update(current) : current),
+        ),
+      };
+    },
+    onError: (error, { issue }, context) => {
+      rollbackOptimistic(
+        queryClient,
+        queryKeys.issue(workspaceId, issue.id),
+        context?.detail,
+      );
+      rollbackOptimistic(
+        queryClient,
+        queryKeys.issueList(workspaceId, issue.project_id),
+        context?.list,
+        { error, message: "라벨을 바꾸지 못했습니다." },
       );
     },
     onSettled: (_data, _error, { issue }) =>

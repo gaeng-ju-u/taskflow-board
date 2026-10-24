@@ -16,13 +16,16 @@ export type Issue = Pick<
   | "sort_order"
   | "created_at"
   | "updated_at"
->;
+> & {
+  // 붙은 라벨. 이슈와 함께 조회해 목록·보드·상세가 같은 캐시로 갱신된다.
+  issue_labels: { label_id: string }[];
+};
 
 export type IssueStatus = Issue["status"];
 export type IssuePriority = Issue["priority"];
 
 export const ISSUE_COLUMNS =
-  "id, workspace_id, project_id, number, title, description, status, priority, assignee_id, sort_order, created_at, updated_at";
+  "id, workspace_id, project_id, number, title, description, status, priority, assignee_id, sort_order, created_at, updated_at, issue_labels(label_id)";
 
 export async function listIssues(supabase: Supabase, projectId: string) {
   const { data, error } = await supabase

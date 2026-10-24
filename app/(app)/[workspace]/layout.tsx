@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/components/auth/user-menu";
-import { MembersNavLink } from "@/components/members/members-nav-link";
 import { ProjectNav } from "@/components/projects/project-nav";
+import { SettingsNav } from "@/components/settings/settings-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/data/auth";
 import { getProjects } from "@/lib/data/projects";
@@ -30,8 +30,8 @@ export default function WorkspaceLayout({
           <SidebarProjects params={params} />
         </Suspense>
         <div className="mt-auto border-t p-2">
-          <Suspense fallback={<div className="h-8" />}>
-            <SidebarMembersLink params={params} />
+          <Suspense fallback={<div className="h-16" />}>
+            <SidebarSettings params={params} />
           </Suspense>
         </div>
       </aside>
@@ -91,9 +91,9 @@ async function SidebarProjects({ params }: { params: Params }) {
   return <ProjectNav workspace={workspace} initialProjects={projects} />;
 }
 
-async function SidebarMembersLink({ params }: { params: Params }) {
+async function SidebarSettings({ params }: { params: Params }) {
   const { workspace: slug } = await params;
-  return <MembersNavLink workspaceSlug={slug} />;
+  return <SettingsNav workspaceSlug={slug} />;
 }
 
 async function CurrentUserMenu({ params }: { params: Params }) {

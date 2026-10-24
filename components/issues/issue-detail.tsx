@@ -7,6 +7,9 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { z } from "zod";
 
+import { cn } from "cn";
+
+import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
 import { projectPath } from "@/components/projects/types";
 import {
   AlertDialog,
@@ -21,8 +24,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/lib/queries/issues";
+import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 import {
   issueDescriptionSchema,
@@ -42,17 +47,23 @@ export function IssueDetail({
   project,
   initialIssue,
   initialMembers,
+  initialLabels,
 }: {
   workspaceSlug: string;
   project: ProjectRef;
   initialIssue: Issue;
   initialMembers: Member[];
+  initialLabels: Label[];
 }) {
   const workspaceId = initialIssue.workspace_id;
   const { data: issue } = useIssue(workspaceId, initialIssue.id, initialIssue);
   const { data: members = initialMembers } = useMembers(
     workspaceId,
     initialMembers,
+  );
+  const { data: labels = initialLabels } = useLabels(
+    workspaceId,
+    initialLabels,
   );
   const updateIssue = useUpdateIssue(workspaceId);
 
@@ -135,6 +146,9 @@ export function IssueDetail({
             }
           />
         </Property>
+        <Property label="라벨" alignTop>
+          <IssueLabelPicker issue={issue} labels={labels} />
+        </Property>
         <div className="mt-4 border-t pt-4">
           <DeleteIssueButton
             issue={issue}
@@ -147,16 +161,26 @@ export function IssueDetail({
   );
 }
 
+// alignTop: 내용이 여러 줄로 늘어나는 속성(라벨)은 이름을 첫 줄에 맞춘다.
 function Property({
   label,
+  alignTop,
   children,
 }: {
   label: string;
+  alignTop?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-16 shrink-0 text-xs text-muted-foreground">
+    <div
+      className={cn("flex gap-2", alignTop ? "items-start" : "items-center")}
+    >
+      <span
+        className={cn(
+          "w-16 shrink-0 text-xs text-muted-foreground",
+          alignTop && "pt-1.5",
+        )}
+      >
         {label}
       </span>
       {children}
