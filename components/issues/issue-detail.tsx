@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import type { Activity, Comment } from "@/lib/api/activity";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/lib/queries/issues";
@@ -39,6 +40,8 @@ import {
   PrioritySelect,
   StatusSelect,
 } from "./property-selects";
+import { IssueTimeline } from "./issue-timeline";
+import { Markdown } from "./markdown";
 
 type ProjectRef = { id: string; key: string; name: string };
 
@@ -48,12 +51,18 @@ export function IssueDetail({
   initialIssue,
   initialMembers,
   initialLabels,
+  initialComments,
+  initialActivities,
+  currentUserId,
 }: {
   workspaceSlug: string;
   project: ProjectRef;
   initialIssue: Issue;
   initialMembers: Member[];
   initialLabels: Label[];
+  initialComments: Comment[];
+  initialActivities: Activity[];
+  currentUserId: string;
 }) {
   const workspaceId = initialIssue.workspace_id;
   const { data: issue } = useIssue(workspaceId, initialIssue.id, initialIssue);
@@ -114,6 +123,15 @@ export function IssueDetail({
               { onSettled: done },
             )
           }
+        />
+        <IssueTimeline
+          workspaceId={workspaceId}
+          issueId={issue.id}
+          currentUserId={currentUserId}
+          members={members}
+          labels={labels}
+          initialComments={initialComments}
+          initialActivities={initialActivities}
         />
       </div>
 
@@ -269,6 +287,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: SaveText }) {
   );
 }
 
+// 평소에는 렌더링된 마크다운을 보여주고, 누르면 텍스트로 편집한다. 포커스가 빠지면 저장, Esc는 취소.
 function EditableDescription({
   value,
   onSave,
@@ -276,17 +295,71 @@ function EditableDescription({
   value: string;
   onSave: SaveText;
 }) {
-  const { inputProps } = useEditableText(value, issueDescriptionSchema, onSave);
+  const [editing, setEditing] = useState(false);
+  const { inputProps, cancelNextSave } = useEditableText(
+    value,
+    issueDescriptionSchema,
+    onSave,
+  );
+  // 편집이 끝난 뒤에도 저장이 끝날 때까지는 입력값(draft)을 보여준다 (useEditableText 참고).
+  const shown = inputProps.value;
+
+  if (editing) {
+    return (
+      <div className="space-y-1">
+        <Textarea
+          aria-label="설명"
+          autoFocus
+          maxLength={10000}
+          placeholder="마크다운으로 설명을 쓰세요"
+          rows={10}
+          {...inputProps}
+          onBlur={() => {
+            inputProps.onBlur();
+            setEditing(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return;
+            if (event.key === "Escape") {
+              cancelNextSave();
+              event.currentTarget.blur();
+            }
+          }}
+          className="resize-y font-mono text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          마크다운 지원: **굵게**, *기울임*, `코드`, - 목록, - [ ] 체크리스트,
+          [링크](https://…). 바깥을 누르면 저장, Esc는 취소
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <Textarea
-      aria-label="설명"
-      maxLength={10000}
-      placeholder="설명을 추가하세요"
-      rows={8}
-      {...inputProps}
-      className="resize-y border-transparent shadow-none hover:border-input focus-visible:border-ring"
-    />
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="설명 편집"
+      onClick={(event) => {
+        // 설명 안의 링크를 누르면 편집하지 않고 링크를 연다.
+        if ((event.target as HTMLElement).closest("a")) return;
+        setEditing(true);
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter") {
+          event.preventDefault();
+          setEditing(true);
+        }
+      }}
+      className="min-h-24 cursor-text rounded-md px-3 py-2 outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {shown.trim() ? (
+        <Markdown>{shown}</Markdown>
+      ) : (
+        <p className="text-sm text-muted-foreground">설명을 추가하세요</p>
+      )}
+    </div>
   );
 }
 
