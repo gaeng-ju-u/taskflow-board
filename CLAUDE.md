@@ -53,7 +53,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - `lib/supabase/server.ts`의 `createClient()`는 `await connection()`을 먼저 호출한다. Partial Prefetching이 쿠키 기반 내용까지 미리 렌더하는데, Supabase(토큰 만료 확인)와 TanStack Query가 렌더 중 `Date.now()`를 써서 에러가 나기 때문이다. 이 줄을 지우지 않는다.
 - 개발 서버 에러는 `.next/dev/logs/next-development.log`에서 확인할 수 있다.
 - 권한은 RLS로 보장한다. 클라이언트의 권한 검사는 UX용일 뿐이다.
-- 필터, 정렬, 그룹 상태는 URL search params에 둔다.
+- 필터, 정렬, 그룹 상태는 URL search params에 둔다. 읽기·쓰기 규칙은 `lib/issue-filters.ts`(기본값은 URL에 쓰지 않음, 잘못된 값은 무시), 쓰기는 `window.history.replaceState`로 해서 서버에 화면을 다시 요청하지 않고 뒤로 가기 기록도 쌓지 않는다(`components/issues/use-issue-filters.ts`). URL의 id는 `z.guid()`로 형식만 검사한다(`z.uuid()`는 버전 자리가 0인 시드용 고정 id를 버림).
 - `'use client'`는 상호작용이 필요한 말단 컴포넌트에만 붙인다.
 - 인증 라우팅 가드는 `proxy.ts`에서 한다 (middleware 아님).
 - 색은 토큰 클래스(`bg-background`, `text-muted-foreground` 등)로만 쓴다. `bg-white`, `text-gray-900` 같은 고정 색은 다크모드를 깨뜨린다. 예외: 라벨 색처럼 사용자가 고른 데이터 색은 인라인 스타일로 색 점에만 쓰고, 글자·테두리는 토큰 색을 쓴다(`components/labels/label-chip.tsx`).
