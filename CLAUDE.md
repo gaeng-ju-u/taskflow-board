@@ -60,8 +60,11 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 테마는 `lib/theme.ts`의 인라인 스크립트와 `hooks/use-theme.ts`로 처리한다 (next-themes 미사용). 클래스 병합은 `cn` 패키지의 `cn()`을 쓴다.
 - shadcn 컴포넌트를 다른 요소로 렌더할 때는 `asChild`가 아니라 Base UI의 `render` prop을 쓴다.
 - 입력 검증은 Zod 스키마로 하고, 폼과 뮤테이션에서 같은 스키마를 공유한다.
-- 키보드 처리(Enter 저장, Esc 취소, 단축키)는 `event.nativeEvent.isComposing`이면 무시한다. 한글 조합 중의 Enter에 반응하면 마지막 글자가 한 번 더 입력된다.
+- 키보드 처리(Enter 저장, Esc 취소, 단축키)는 `event.nativeEvent.isComposing`이면 무시한다. 한글 조합 중의 Enter에 반응하면 마지막 글자가 한 번 더 입력된다. 단, ⌘/Ctrl+Enter 같은 등록 단축키는 무시하면 두 번 눌러야 등록되므로, 조합 중에 눌리면 예약했다가 `compositionend`에서 입력칸의 실제 값으로 처리한다(`components/issues/issue-timeline.tsx`의 `useModEnterSubmit`).
 - 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
+- 마크다운(설명, 코멘트)은 `components/issues/markdown.tsx`의 `Markdown`으로 렌더한다. 요소별 스타일은 토큰 클래스로 주고, 원본 HTML은 렌더하지 않는다(react-markdown 기본값 유지, rehype-raw 금지).
+- 활동 로그 쿼리 키는 이슈 상세 키 아래(`queryKeys.activities`)에 둔다. 이슈를 수정하는 뮤테이션이 상세 키를 무효화하면 함께 다시 불러오므로 뮤테이션마다 따로 무효화하지 않는다.
+- 상대 시간("3분 전")은 렌더 중 `Date.now()` 대신 `hooks/use-now.ts`의 `useNow()`를 쓰고, `<time>`에 `suppressHydrationWarning`을 준다(서버와 브라우저의 현재 시각 차이).
 - 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.
 - 하나만 고르는 드롭다운(`DropdownMenuRadioItem`)은 `closeOnClick`을 준다. Base UI 기본값은 골라도 닫히지 않음이다.
 - 검색칸이 필요한 선택 창(라벨 선택 등)은 DropdownMenu가 아니라 Popover로 만든다. Base UI Menu 안의 입력칸은 메뉴의 글자 단축키와 충돌한다(`components/labels/label-picker.tsx`).

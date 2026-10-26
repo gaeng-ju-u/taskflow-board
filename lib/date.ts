@@ -28,3 +28,15 @@ export function formatDateTime(iso: string) {
   const { month, day, hour, minute } = seoulParts(iso);
   return `${month}월 ${day}일 ${hour}:${minute}`;
 }
+
+// 방금, 3분 전, 2시간 전, 어제, 그 이전은 날짜. now를 받아 렌더 중에 Date.now()를 부르지 않게 한다.
+export function formatRelative(iso: string, now: number) {
+  const diff = Math.max(0, now - new Date(iso).getTime());
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "방금";
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  if (hours < 48) return "어제";
+  return formatDate(iso);
+}
