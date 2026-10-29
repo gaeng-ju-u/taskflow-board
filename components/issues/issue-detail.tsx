@@ -314,6 +314,12 @@ function EditableDescription({
           placeholder="마크다운으로 설명을 쓰세요"
           rows={10}
           {...inputProps}
+          onFocus={(event) => {
+            inputProps.onFocus();
+            // 이어 쓰기 쉽게 커서를 내용 끝에 둔다 (기본값은 맨 앞).
+            const end = event.currentTarget.value.length;
+            event.currentTarget.setSelectionRange(end, end);
+          }}
           onBlur={() => {
             inputProps.onBlur();
             setEditing(false);

@@ -14,14 +14,19 @@ export const queryKeys = {
     [...queryKeys.workspace(workspaceId), "labels"] as const,
   issues: (workspaceId: string) =>
     [...queryKeys.workspace(workspaceId), "issues"] as const,
+  // 모든 프로젝트의 이슈 목록. 프로젝트를 모르는 변경(Realtime 삭제 이벤트)을 반영할 때 쓴다.
+  issueLists: (workspaceId: string) =>
+    [...queryKeys.issues(workspaceId), "list"] as const,
   issueList: (workspaceId: string, projectId: string) =>
-    [...queryKeys.issues(workspaceId), "list", projectId] as const,
+    [...queryKeys.issueLists(workspaceId), projectId] as const,
   issue: (workspaceId: string, issueId: string) =>
     [...queryKeys.issues(workspaceId), "detail", issueId] as const,
   // 활동 로그는 이슈 상세 키 아래에 둔다. 이슈를 수정하는 뮤테이션이 상세 키를 무효화하면 함께 다시 불러온다.
   activities: (workspaceId: string, issueId: string) =>
     [...queryKeys.issue(workspaceId, issueId), "activities"] as const,
   // 코멘트는 상세 키 아래에 두지 않는다. 이슈를 고칠 때마다 코멘트까지 다시 불러올 필요는 없다.
+  commentLists: (workspaceId: string) =>
+    [...queryKeys.issues(workspaceId), "comments"] as const,
   comments: (workspaceId: string, issueId: string) =>
-    [...queryKeys.issues(workspaceId), "comments", issueId] as const,
+    [...queryKeys.commentLists(workspaceId), issueId] as const,
 };

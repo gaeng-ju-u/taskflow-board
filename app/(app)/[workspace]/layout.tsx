@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { UserMenu } from "@/components/auth/user-menu";
 import { ProjectNav } from "@/components/projects/project-nav";
+import { RealtimeSync } from "@/components/realtime/realtime-sync";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/data/auth";
@@ -19,6 +20,10 @@ export default function WorkspaceLayout({
 }: LayoutProps<"/[workspace]">) {
   return (
     <div className="flex flex-1">
+      {/* 다른 사람의 변경을 실시간으로 캐시에 반영한다. 화면에는 아무것도 그리지 않는다. */}
+      <Suspense fallback={null}>
+        <WorkspaceRealtime params={params} />
+      </Suspense>
       {/* 모바일에서는 사이드바를 숨기고, 워크스페이스 홈의 프로젝트 목록을 쓴다. */}
       <aside className="hidden w-60 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex h-14 items-center border-b px-4">
@@ -89,6 +94,12 @@ async function SidebarProjects({ params }: { params: Params }) {
   const workspace = await getWorkspaceBySlug(slug);
   const projects = await getProjects(workspace.id);
   return <ProjectNav workspace={workspace} initialProjects={projects} />;
+}
+
+async function WorkspaceRealtime({ params }: { params: Params }) {
+  const { workspace: slug } = await params;
+  const workspace = await getWorkspaceBySlug(slug);
+  return <RealtimeSync workspaceId={workspace.id} />;
 }
 
 async function SidebarSettings({ params }: { params: Params }) {
