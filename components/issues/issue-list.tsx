@@ -30,6 +30,7 @@ import {
 } from "@/lib/queries/issues";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
+import { useHighlighted } from "@/lib/realtime/highlight";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
@@ -305,9 +306,16 @@ function IssueRow({
   const pending = issue.number === PENDING_NUMBER;
   const ref = formatIssueRef(projectKey, issue.number);
   const attached = issueLabels(issue.issue_labels, labels);
+  // 다른 사람이 방금 바꾼 이슈는 잠깐 강조한다 (Realtime).
+  const highlighted = useHighlighted(issue.id);
 
   return (
-    <li className="group flex h-11 items-center gap-1 border-b px-4 hover:bg-muted/40">
+    <li
+      className={cn(
+        "group flex h-11 items-center gap-1 border-b px-4 hover:bg-muted/40",
+        highlighted && "animate-highlight",
+      )}
+    >
       <PrioritySelect
         compact
         value={issue.priority}

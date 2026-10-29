@@ -128,3 +128,19 @@
     @apply font-sans;
   }
 }
+
+/* 다른 사람이 바꾼 이슈·코멘트를 잠깐 강조한다(lib/realtime/highlight.ts). 배경색 대신 안쪽 그림자로 덮어
+   카드의 원래 배경으로 돌아갈 때 깜빡이지 않게 하고, 색은 테마 토큰을 써서 다크모드에서도 맞게 한다. */
+@theme {
+  --animate-highlight: highlight 2s ease-out;
+
+  @keyframes highlight {
+    from {
+      box-shadow: inset 0 0 0 9999px
+        color-mix(in oklch, var(--primary) 12%, transparent);
+    }
+    to {
+      box-shadow: inset 0 0 0 9999px transparent;
+    }
+  }
+}

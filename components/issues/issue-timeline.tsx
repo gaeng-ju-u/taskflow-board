@@ -30,6 +30,7 @@ import type { Activity, Comment } from "@/lib/api/activity";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import { formatDateTime, formatRelative } from "@/lib/date";
+import { useHighlighted } from "@/lib/realtime/highlight";
 import {
   useActivities,
   useComments,
@@ -296,6 +297,8 @@ function CommentItem({
   const [saving, setSaving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const editKeys = useModEnterSubmit(save, () => setDraft(null));
+  // 다른 사람이 방금 쓰거나 고친 코멘트는 잠깐 강조한다 (Realtime).
+  const highlighted = useHighlighted(comment.id);
   const edited =
     new Date(comment.updated_at).getTime() -
       new Date(comment.created_at).getTime() >
@@ -318,7 +321,12 @@ function CommentItem({
   }
 
   return (
-    <li className="rounded-lg border bg-card">
+    <li
+      className={cn(
+        "rounded-lg border bg-card",
+        highlighted && "animate-highlight",
+      )}
+    >
       <div className="flex items-center gap-2 border-b px-3 py-1.5">
         {author ? (
           <MemberAvatar member={author} />

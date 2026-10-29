@@ -53,6 +53,8 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - `lib/supabase/server.ts`의 `createClient()`는 `await connection()`을 먼저 호출한다. Partial Prefetching이 쿠키 기반 내용까지 미리 렌더하는데, Supabase(토큰 만료 확인)와 TanStack Query가 렌더 중 `Date.now()`를 써서 에러가 나기 때문이다. 이 줄을 지우지 않는다.
 - 개발 서버 에러는 `.next/dev/logs/next-development.log`에서 확인할 수 있다.
 - 권한은 RLS로 보장한다. 클라이언트의 권한 검사는 UX용일 뿐이다.
+- 실시간 동기화(Supabase Realtime Postgres Changes)는 `components/realtime/realtime-sync.tsx`가 워크스페이스 단위로 구독하고, 캐시 반영은 `lib/realtime/apply-change.ts`에서만 한다. 내 뮤테이션이 진행 중인 항목의 이벤트는 건너뛰고(메아리로 화면이 튀지 않게), 이슈·코멘트는 캐시보다 `updated_at`이 새로운 이벤트만 반영한다. 다른 사람이 바꾼 항목은 `useHighlighted`로 잠깐 강조하고 토스트는 띄우지 않는다. 구독 전에 `await supabase.realtime.setAuth()`로 로그인 토큰을 먼저 채운다. 구독 요청에는 그 순간의 토큰이 실려서, 토큰 없이 구독하면 서버가 비로그인(anon)으로 등록해 RLS 때문에 추가·수정 이벤트가 오지 않는다(삭제만 옴). 등록된 권한은 `realtime.subscription`의 `claims_role`로 확인할 수 있다.
+- 실시간 대상 테이블을 추가할 때: 마이그레이션으로 `supabase_realtime` 발행에 추가하고, `workspace_id`가 있으면 `replica identity full`로 두어 삭제 이벤트도 `workspace_id` 필터로 거른다(삭제 이벤트에는 RLS가 적용되지 않음). `supabase/tests/realtime.test.sql`도 갱신한다.
 - 필터, 정렬, 그룹 상태는 URL search params에 둔다. 읽기·쓰기 규칙은 `lib/issue-filters.ts`(기본값은 URL에 쓰지 않음, 잘못된 값은 무시), 쓰기는 `window.history.replaceState`로 해서 서버에 화면을 다시 요청하지 않고 뒤로 가기 기록도 쌓지 않는다(`components/issues/use-issue-filters.ts`). URL의 id는 `z.guid()`로 형식만 검사한다(`z.uuid()`는 버전 자리가 0인 시드용 고정 id를 버림).
 - `'use client'`는 상호작용이 필요한 말단 컴포넌트에만 붙인다.
 - 인증 라우팅 가드는 `proxy.ts`에서 한다 (middleware 아님).
@@ -62,7 +64,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 입력 검증은 Zod 스키마로 하고, 폼과 뮤테이션에서 같은 스키마를 공유한다.
 - 키보드 처리(Enter 저장, Esc 취소, 단축키)는 `event.nativeEvent.isComposing`이면 무시한다. 한글 조합 중의 Enter에 반응하면 마지막 글자가 한 번 더 입력된다. 단, ⌘/Ctrl+Enter 같은 등록 단축키는 무시하면 두 번 눌러야 등록되므로, 조합 중에 눌리면 예약했다가 `compositionend`에서 입력칸의 실제 값으로 처리한다(`components/issues/issue-timeline.tsx`의 `useModEnterSubmit`).
 - 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
-- 마크다운(설명, 코멘트)은 `components/issues/markdown.tsx`의 `Markdown`으로 렌더한다. 요소별 스타일은 토큰 클래스로 주고, 원본 HTML은 렌더하지 않는다(react-markdown 기본값 유지, rehype-raw 금지).
+- 마크다운(설명, 코멘트)은 `components/issues/markdown.tsx`의 `Markdown`으로 렌더한다. 요소별 스타일은 토큰 클래스로 주고, 원본 HTML은 렌더하지 않는다(react-markdown 기본값 유지, rehype-raw 금지). 줄바꿈은 입력한 그대로 보이게 한다: 엔터 한 번은 줄바꿈(remark-breaks), 빈 줄 여러 개는 개수만큼 보존(`preserveBlankLines`), 블록 간격은 한 줄 높이(`mt-[1lh]`).
 - 활동 로그 쿼리 키는 이슈 상세 키 아래(`queryKeys.activities`)에 둔다. 이슈를 수정하는 뮤테이션이 상세 키를 무효화하면 함께 다시 불러오므로 뮤테이션마다 따로 무효화하지 않는다.
 - 상대 시간("3분 전")은 렌더 중 `Date.now()` 대신 `hooks/use-now.ts`의 `useNow()`를 쓰고, `<time>`에 `suppressHydrationWarning`을 준다(서버와 브라우저의 현재 시각 차이).
 - 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.

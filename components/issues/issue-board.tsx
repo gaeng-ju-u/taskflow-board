@@ -51,6 +51,7 @@ import {
 } from "@/lib/queries/issues";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
+import { useHighlighted } from "@/lib/realtime/highlight";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
@@ -509,11 +510,14 @@ function IssueCard({
   const priority = PRIORITY_META[issue.priority];
   const assignee = members.find((member) => member.id === issue.assignee_id);
   const pending = issue.number === PENDING_NUMBER;
+  // 다른 사람이 방금 바꾸거나 옮긴 카드는 잠깐 강조한다 (Realtime).
+  const highlighted = useHighlighted(issue.id);
 
   return (
     <div
       className={cn(
         "flex flex-col gap-2 rounded-lg border bg-card p-3 pb-1.5 text-card-foreground",
+        highlighted && "animate-highlight",
         className,
       )}
     >
