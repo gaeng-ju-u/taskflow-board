@@ -12,12 +12,12 @@ import {
   applyProjectChange,
 } from "@/lib/realtime/apply-change";
 import { trackOwnChanges } from "@/lib/realtime/own-changes";
+import { realtimeTopics } from "@/lib/realtime/topics";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/lib/supabase/database.types";
 
 // 워크스페이스의 DB 변경을 구독해 캐시에 반영한다. 화면에는 아무것도 그리지 않는다.
-// 인증 토큰은 Supabase 클라이언트가 세션에서 넣어 주므로(onAuthStateChange → realtime.setAuth),
-// 추가·수정 이벤트는 로그인한 사용자의 RLS로 걸러진다.
+// 구독 전에 로그인 토큰을 채우므로(아래 setAuth) 추가·수정 이벤트는 로그인한 사용자의 RLS로 걸러진다.
 export function RealtimeSync({ workspaceId }: { workspaceId: string }) {
   const queryClient = useQueryClient();
 
@@ -35,7 +35,8 @@ export function RealtimeSync({ workspaceId }: { workspaceId: string }) {
     let subscribedBefore = false;
 
     const channel = supabase
-      .channel(`workspace-sync:${workspaceId}`)
+      // 비공개 채널: 워크스페이스 멤버만 들어온다(private.can_access_channel). 각 테이블의 RLS는 따로 적용된다.
+      .channel(realtimeTopics.sync(workspaceId), { config: { private: true } })
       .on<Tables<"issues">>(
         "postgres_changes",
         { event: "*", schema: "public", table: "issues", filter },
