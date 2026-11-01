@@ -56,6 +56,7 @@ export function IssueTimeline({
   currentUserId,
   members,
   labels,
+  issueRef,
   initialComments,
   initialActivities,
 }: {
@@ -64,6 +65,7 @@ export function IssueTimeline({
   currentUserId: string;
   members: Member[];
   labels: Label[];
+  issueRef: (id: string) => string | null;
   initialComments: Comment[];
   initialActivities: Activity[];
 }) {
@@ -85,7 +87,11 @@ export function IssueTimeline({
   const items: Item[] = [
     ...(mode === "all"
       ? activities.flatMap((activity): Item[] => {
-          const text = describeActivity(activity, { members, labels });
+          const text = describeActivity(activity, {
+            members,
+            labels,
+            issueRef,
+          });
           return text
             ? [{ kind: "activity", at: activity.created_at, activity, text }]
             : [];

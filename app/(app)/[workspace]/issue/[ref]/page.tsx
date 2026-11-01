@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { getActivities, getComments } from "@/lib/data/activity";
 import { getCurrentUser } from "@/lib/data/auth";
-import { getIssueByRef } from "@/lib/data/issues";
+import { getIssueByRef, getIssues } from "@/lib/data/issues";
 import { getLabels } from "@/lib/data/labels";
 import { getMembers } from "@/lib/data/members";
 import { getWorkspaceBySlug } from "@/lib/data/workspaces";
@@ -41,15 +41,18 @@ async function IssueContent({
     getLabels(workspace.id),
     getCurrentUser(),
   ]);
-  const [comments, activities] = await Promise.all([
+  // 프로젝트 이슈 목록은 상위·하위 이슈 표시에 쓴다 (목록·보드와 같은 캐시).
+  const [comments, activities, issues] = await Promise.all([
     getComments(issue.id),
     getActivities(issue.id),
+    getIssues(project.id),
   ]);
   return (
     <IssueDetail
       workspaceSlug={workspace.slug}
       project={project}
       initialIssue={issue}
+      initialIssues={issues}
       initialMembers={members}
       initialLabels={labels}
       initialComments={comments}

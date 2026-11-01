@@ -29,6 +29,7 @@ export type IssuePatch = Partial<
     | "status"
     | "priority"
     | "assignee_id"
+    | "parent_id"
     | "sort_order"
   >
 >;
@@ -182,7 +183,7 @@ export function useUpdateIssue(workspaceId: string) {
         (current) => (current ? { ...current, ...patch } : current),
       ),
     }),
-    onError: (error, { issue }, context) => {
+    onError: (error, { issue, patch }, context) => {
       rollbackOptimistic(
         queryClient,
         queryKeys.issue(workspaceId, issue.id),
@@ -192,12 +193,7 @@ export function useUpdateIssue(workspaceId: string) {
         queryClient,
         queryKeys.issueList(workspaceId, issue.project_id),
         context?.list,
-        {
-          error,
-          message: hasErrorCode(error, "23514")
-            ? "담당자는 워크스페이스 멤버여야 합니다."
-            : "이슈를 수정하지 못했습니다.",
-        },
+        { error, message: updateErrorMessage(error, patch) },
       );
     },
     onSettled: (_data, _error, { issue }) =>
@@ -210,6 +206,13 @@ export function useUpdateIssue(workspaceId: string) {
         }),
       ]),
   });
+}
+
+// 참조 검사(validate_issue_refs) 위반은 모두 23514라, 바꾸려던 필드로 어떤 검사인지 구분한다.
+function updateErrorMessage(error: MutationError, patch: IssuePatch) {
+  if (!hasErrorCode(error, "23514")) return "이슈를 수정하지 못했습니다.";
+  if ("parent_id" in patch) return "이 이슈를 상위 이슈로 지정할 수 없습니다.";
+  return "담당자는 워크스페이스 멤버여야 합니다.";
 }
 
 // 이슈에 라벨을 붙이거나 뗀다. 목록과 상세 캐시를 함께 바꾼다.

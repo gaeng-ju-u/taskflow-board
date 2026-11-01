@@ -24,6 +24,8 @@ export const createIssueSchema = z.object({
   status: issueStatusSchema,
   priority: issuePrioritySchema,
   assignee_id: z.uuid().nullable(),
+  // 시드용 고정 id(버전 자리가 0)도 받도록 z.guid()로 형식만 검사한다.
+  parent_id: z.guid().nullable(),
 });
 
 export type CreateIssueInput = z.infer<typeof createIssueSchema>;
