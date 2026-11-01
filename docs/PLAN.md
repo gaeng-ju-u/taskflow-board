@@ -81,7 +81,7 @@ proxy.ts                                             비로그인 리다이렉�
 - [x] 리스트 뷰, 필터·정렬 (URL 상태): 상태·우선순위·담당자(나에게 할당)·라벨·제목 필터, 정렬 5종, 그룹 5종, 목록·보드 공통
 - [x] 이슈 상세: 마크다운 설명, 코멘트(수정·삭제), 활동 로그(코멘트와 한 타임라인, 최신순·최근 10개·코멘트만 보기, 라벨·설명 변경 기록 추가, pgTAP 8개 추가)
 - [x] Realtime 동기화: 이슈·코멘트·이슈 라벨·라벨·프로젝트 변경을 구독해 Query 캐시에 반영, 다른 사람이 바꾼 항목 강조 (pgTAP 6개 추가)
-- [ ] Realtime Presence: 이슈 상세와 프로젝트 화면 제목 옆에 접속자 아바타 (비공개 채널, 워크스페이스 멤버만)
+- [x] Realtime Presence: 이슈 상세와 프로젝트 화면 제목 옆에 접속자 아바타, 모든 Realtime 채널을 비공개 채널로 전환(워크스페이스 멤버만, pgTAP 8개 추가)
 
 ### 3주차: 확장과 마감 (밀리면 여기서 자른다)
 
@@ -104,6 +104,7 @@ proxy.ts                                             비로그인 리다이렉�
 - **Supabase Auth URL 설정**: Site URL은 배포 주소. Redirect URLs는 `https://taskflow-board-tau.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`, `http://localhost:3000/**`
   - 로그인 요청 주소에는 `?next=...`가 붙는다. Site URL과 도메인이 다른 localhost는 Redirect URLs와 전체 주소로 비교되어 `/auth/callback`만으로는 맞지 않고, Site URL(배포 주소)로 보내진다. `/**` 와일드카드로 해결 (2026-10-19)
 - **Preview 배포에서는 로그인 불가**: Preview 주소가 Redirect URLs에 없음. 필요 시 와일드카드 주소 등록
+- **Realtime 설정**: 모든 채널은 비공개 채널(`private: true`)이고 `realtime.messages` RLS 정책으로 워크스페이스 멤버만 들어온다. Supabase 대시보드 Realtime Settings의 "Allow public access"는 꺼 둔다(켜 두면 비공개 표시 없이 같은 채널 이름으로 들어오는 경로가 남음). 끄기 전에 비공개 채널 코드가 배포돼 있어야 한다(먼저 끄면 공개 채널을 쓰던 이전 배포의 실시간 동기화가 막힘)
 - **무료 플랜 주의**: Supabase 무료 프로젝트는 일정 기간 접속이 없으면 일시정지
 
 ## 검증

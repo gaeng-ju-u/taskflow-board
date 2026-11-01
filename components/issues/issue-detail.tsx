@@ -11,6 +11,7 @@ import { cn } from "cn";
 
 import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
 import { projectPath } from "@/components/projects/types";
+import { PresenceAvatars } from "@/components/realtime/presence-avatars";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +31,7 @@ import type { Member } from "@/lib/api/members";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/lib/queries/issues";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
+import { realtimeTopics } from "@/lib/realtime/topics";
 import {
   issueDescriptionSchema,
   issueTitleSchema,
@@ -95,19 +97,26 @@ export function IssueDetail({
   return (
     <div className="flex flex-1 flex-col lg:flex-row">
       <div className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <nav
-          aria-label="위치"
-          className="flex items-center gap-1 text-sm text-muted-foreground"
-        >
-          <Link
-            href={projectPath(workspaceSlug, project.key)}
-            className="hover:text-foreground"
+        <div className="flex items-center justify-between gap-2">
+          <nav
+            aria-label="위치"
+            className="flex items-center gap-1 text-sm text-muted-foreground"
           >
-            {project.name}
-          </Link>
-          <ChevronRightIcon className="size-4" />
-          <span className="font-mono">{ref}</span>
-        </nav>
+            <Link
+              href={projectPath(workspaceSlug, project.key)}
+              className="hover:text-foreground"
+            >
+              {project.name}
+            </Link>
+            <ChevronRightIcon className="size-4" />
+            <span className="font-mono">{ref}</span>
+          </nav>
+          {/* 이 이슈를 지금 보고 있는 다른 사람들 (Realtime Presence) */}
+          <PresenceAvatars
+            topic={realtimeTopics.issue(workspaceId, issue.id)}
+            me={members.find((member) => member.id === currentUserId) ?? null}
+          />
+        </div>
 
         <EditableTitle
           value={issue.title}
