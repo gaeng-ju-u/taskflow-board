@@ -93,6 +93,8 @@ proxy.ts                                             비로그인 리다이렉�
 
 ### 이후 후보 (3주차 뒤 여유가 있을 때)
 
+- [ ] `npm audit` 경고(높음 9건) 정리: 모두 `braces` 하나에서 나오며 경로는 `shadcn`(CLI) → `fast-glob` → `micromatch` → `braces`. 앱 실행 코드에는 포함되지 않는다. `npm audit fix --force`는 shadcn을 크게 바꿀 수 있어 미뤄 둠 (2026-10-22 확인)
+
 - [ ] 나와 관련된 알림(나에게 할당, 내 이슈 코멘트, 멘션)과 이를 켜고 끄는 "내 설정" 화면. 다른 사람의 모든 변경을 알리면 시끄러워 꺼진 채로 남기 쉬워서, 실시간 동기화에서는 알림 대신 바뀐 항목 강조만 넣었다 (2026-10-29 결정)
 
 ## 배포
@@ -104,7 +106,7 @@ proxy.ts                                             비로그인 리다이렉�
 - **Supabase Auth URL 설정**: Site URL은 배포 주소. Redirect URLs는 `https://taskflow-board-tau.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`, `http://localhost:3000/**`
   - 로그인 요청 주소에는 `?next=...`가 붙는다. Site URL과 도메인이 다른 localhost는 Redirect URLs와 전체 주소로 비교되어 `/auth/callback`만으로는 맞지 않고, Site URL(배포 주소)로 보내진다. `/**` 와일드카드로 해결 (2026-10-19)
 - **Preview 배포에서는 로그인 불가**: Preview 주소가 Redirect URLs에 없음. 필요 시 와일드카드 주소 등록
-- **Realtime 설정**: 모든 채널은 비공개 채널(`private: true`)이고 `realtime.messages` RLS 정책으로 워크스페이스 멤버만 들어온다. Supabase 대시보드 Realtime Settings의 "Allow public access"는 꺼 둔다(켜 두면 비공개 표시 없이 같은 채널 이름으로 들어오는 경로가 남음). 끄기 전에 비공개 채널 코드가 배포돼 있어야 한다(먼저 끄면 공개 채널을 쓰던 이전 배포의 실시간 동기화가 막힘)
+- **Realtime 설정**: 모든 채널은 비공개 채널(`private: true`)이고 `realtime.messages` RLS 정책으로 워크스페이스 멤버만 들어온다. Supabase 대시보드 Realtime Settings의 "Allow public access to channels"는 꺼 둔다(2026-11-01 끔)(켜 두면 비공개 표시 없이 같은 채널 이름으로 들어오는 경로가 남음). 끄기 전에 비공개 채널 코드가 배포돼 있어야 한다(먼저 끄면 공개 채널을 쓰던 이전 배포의 실시간 동기화가 막힘)
 - **무료 플랜 주의**: Supabase 무료 프로젝트는 일정 기간 접속이 없으면 일시정지
 
 ## 검증
