@@ -37,10 +37,13 @@ const EMPTY = {
 export function CreateIssueDialog({
   project,
   members,
+  parent,
   trigger,
 }: {
-  project: Project;
+  project: Pick<Project, "id" | "workspace_id" | "name" | "key">;
   members: Member[];
+  // 주면 그 이슈의 하위 이슈로 만든다. ref는 제목에 보여줄 "TF-3".
+  parent?: { id: string; ref: string };
   trigger: ReactElement;
 }) {
   const createIssue = useCreateIssue(project.workspace_id, project.key);
@@ -57,7 +60,10 @@ export function CreateIssueDialog({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsed = createIssueSchema.safeParse(form);
+    const parsed = createIssueSchema.safeParse({
+      ...form,
+      parent_id: parent?.id ?? null,
+    });
     if (!parsed.success) {
       setError(parsed.error.issues[0].message);
       return;
@@ -88,7 +94,11 @@ export function CreateIssueDialog({
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <DialogHeader>
-            <DialogTitle>새 이슈 · {project.name}</DialogTitle>
+            <DialogTitle>
+              {parent
+                ? `새 하위 이슈 · ${parent.ref}`
+                : `새 이슈 · ${project.name}`}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-1.5">

@@ -16,7 +16,16 @@ const text = (value: unknown) => (typeof value === "string" ? value : null);
 // 모르는 종류는 null(표시하지 않음).
 export function describeActivity(
   activity: Activity,
-  { members, labels }: { members: Member[]; labels: Label[] },
+  {
+    members,
+    labels,
+    issueRef,
+  }: {
+    members: Member[];
+    labels: Label[];
+    // 이슈 id → "TF-3". 지워졌거나 모르는 이슈면 null.
+    issueRef: (id: string) => string | null;
+  },
 ): string | null {
   const payload = isPayload(activity.payload) ? activity.payload : {};
   const memberName = (id: string | null) =>
@@ -63,8 +72,14 @@ export function describeActivity(
           const to = memberName(text(payload.to));
           return to ? `담당자를 지정했습니다: ${to}` : "담당자를 해제했습니다";
         }
-        case "parent_id":
-          return "상위 이슈를 바꿨습니다";
+        case "parent_id": {
+          const to = text(payload.to);
+          if (!to) return "상위 이슈를 해제했습니다";
+          const ref = issueRef(to);
+          return ref
+            ? `상위 이슈를 지정했습니다: ${ref}`
+            : "상위 이슈를 지정했습니다";
+        }
         case "cycle_id":
           return "사이클을 바꿨습니다";
         default:

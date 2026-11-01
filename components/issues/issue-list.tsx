@@ -13,7 +13,12 @@ import {
   LabelDot,
 } from "@/components/labels/label-chip";
 import { Button } from "@/components/ui/button";
-import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import {
+  formatIssueRef,
+  groupByParent,
+  subIssueProgress,
+  type Issue,
+} from "@/lib/api/issues";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
@@ -46,6 +51,7 @@ import {
   PrioritySelect,
   StatusSelect,
 } from "./property-selects";
+import { SubIssueProgress } from "./sub-issue-progress";
 import { useIssueFilters } from "./use-issue-filters";
 
 export function issuePath(workspaceSlug: string, ref: string) {
@@ -90,6 +96,7 @@ export function IssueList({
     filters.sort,
   );
   const groups = buildGroups(visible, filters.group, { members, labels });
+  const subIssuesByParent = groupByParent(issues);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -145,6 +152,7 @@ export function IssueList({
                   <IssueRow
                     key={issue.id}
                     issue={issue}
+                    subIssues={subIssuesByParent.get(issue.id)}
                     projectKey={project.key}
                     workspaceSlug={workspaceSlug}
                     members={members}
@@ -290,12 +298,14 @@ function buildGroups(
 
 function IssueRow({
   issue,
+  subIssues,
   projectKey,
   workspaceSlug,
   members,
   labels,
 }: {
   issue: Issue;
+  subIssues?: Issue[];
   projectKey: string;
   workspaceSlug: string;
   members: Member[];
@@ -343,6 +353,7 @@ function IssueRow({
           {issue.title}
         </Link>
       )}
+      {subIssues && <SubIssueProgress {...subIssueProgress(subIssues)} />}
       <LabelChips
         labels={attached}
         max={2}

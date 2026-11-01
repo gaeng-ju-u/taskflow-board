@@ -24,11 +24,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { formatIssueRef, type Issue } from "@/lib/api/issues";
+import { childIssues, formatIssueRef, type Issue } from "@/lib/api/issues";
 import type { Activity, Comment } from "@/lib/api/activity";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
-import { useDeleteIssue, useIssue, useUpdateIssue } from "@/lib/queries/issues";
+import {
+  useDeleteIssue,
+  useIssue,
+  useIssues,
+  useUpdateIssue,
+} from "@/lib/queries/issues";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 import { realtimeTopics } from "@/lib/realtime/topics";
@@ -42,8 +47,11 @@ import {
   PrioritySelect,
   StatusSelect,
 } from "./property-selects";
+import { issuePath } from "./issue-list";
 import { IssueTimeline } from "./issue-timeline";
 import { Markdown } from "./markdown";
+import { ParentIssuePicker } from "./parent-issue-picker";
+import { SubIssueList } from "./sub-issue-list";
 
 type ProjectRef = { id: string; key: string; name: string };
 
@@ -51,6 +59,7 @@ export function IssueDetail({
   workspaceSlug,
   project,
   initialIssue,
+  initialIssues,
   initialMembers,
   initialLabels,
   initialComments,
@@ -60,6 +69,7 @@ export function IssueDetail({
   workspaceSlug: string;
   project: ProjectRef;
   initialIssue: Issue;
+  initialIssues: Issue[];
   initialMembers: Member[];
   initialLabels: Label[];
   initialComments: Comment[];
@@ -68,6 +78,11 @@ export function IssueDetail({
 }) {
   const workspaceId = initialIssue.workspace_id;
   const { data: issue } = useIssue(workspaceId, initialIssue.id, initialIssue);
+  const { data: issues = initialIssues } = useIssues(
+    workspaceId,
+    project.id,
+    initialIssues,
+  );
   const { data: members = initialMembers } = useMembers(
     workspaceId,
     initialMembers,
@@ -93,6 +108,13 @@ export function IssueDetail({
   }
 
   const ref = formatIssueRef(project.key, issue.number);
+  const parent = issue.parent_id
+    ? issues.find((item) => item.id === issue.parent_id)
+    : undefined;
+  const issueRef = (id: string) => {
+    const found = issues.find((item) => item.id === id);
+    return found ? formatIssueRef(project.key, found.number) : null;
+  };
 
   return (
     <div className="flex flex-1 flex-col lg:flex-row">
@@ -109,6 +131,21 @@ export function IssueDetail({
               {project.name}
             </Link>
             <ChevronRightIcon className="size-4" />
+            {parent && (
+              <>
+                <Link
+                  href={issuePath(
+                    workspaceSlug,
+                    formatIssueRef(project.key, parent.number),
+                  )}
+                  title={parent.title}
+                  className="font-mono hover:text-foreground"
+                >
+                  {formatIssueRef(project.key, parent.number)}
+                </Link>
+                <ChevronRightIcon className="size-4" />
+              </>
+            )}
             <span className="font-mono">{ref}</span>
           </nav>
           {/* 이 이슈를 지금 보고 있는 다른 사람들 (Realtime Presence) */}
@@ -133,12 +170,20 @@ export function IssueDetail({
             )
           }
         />
+        <SubIssueList
+          parent={issue}
+          subIssues={childIssues(issues, issue.id)}
+          project={{ ...project, workspace_id: workspaceId }}
+          workspaceSlug={workspaceSlug}
+          members={members}
+        />
         <IssueTimeline
           workspaceId={workspaceId}
           issueId={issue.id}
           currentUserId={currentUserId}
           members={members}
           labels={labels}
+          issueRef={issueRef}
           initialComments={initialComments}
           initialActivities={initialActivities}
         />
@@ -170,6 +215,16 @@ export function IssueDetail({
             members={members}
             onChange={(assignee_id) =>
               updateIssue.mutate({ issue, patch: { assignee_id } })
+            }
+          />
+        </Property>
+        <Property label="상위 이슈">
+          <ParentIssuePicker
+            issue={issue}
+            issues={issues}
+            projectKey={project.key}
+            onChange={(parent_id) =>
+              updateIssue.mutate({ issue, patch: { parent_id } })
             }
           />
         </Property>

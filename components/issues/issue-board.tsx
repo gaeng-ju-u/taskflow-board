@@ -36,7 +36,9 @@ import { issueLabels, LabelChips } from "@/components/labels/label-chip";
 import { Button } from "@/components/ui/button";
 import {
   formatIssueRef,
+  groupByParent,
   sortOrderBetween,
+  subIssueProgress,
   type Issue,
   type IssueStatus,
 } from "@/lib/api/issues";
@@ -57,6 +59,7 @@ import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
 import { issuePath } from "./issue-list";
 import { PRIORITY_META, STATUS_META } from "./issue-meta";
+import { SubIssueProgress } from "./sub-issue-progress";
 import {
   AssigneeSelect,
   MemberAvatar,
@@ -158,6 +161,7 @@ export function IssueBoard({
     [issues, filters, currentUserId, labelIds],
   );
   const cached = useMemo(() => groupIssues(visible), [visible]);
+  const subIssuesByParent = useMemo(() => groupByParent(issues), [issues]);
   // 드래그 중과 놓은 뒤 저장이 끝날 때까지는 이 배치를 보여준다. 놓자마자 지우면 캐시에 반영되기 전
   // 한 프레임 동안 카드가 원래 자리로 튀었다가 돌아온다 (그 자리 편집 필드와 같은 이유).
   const [draft, setDraft] = useState<Columns | null>(null);
@@ -335,6 +339,7 @@ export function IssueBoard({
                     <SortableCard
                       key={id}
                       issue={issue}
+                      subIssues={subIssuesByParent.get(id)}
                       projectKey={project.key}
                       workspaceSlug={workspaceSlug}
                       members={members}
@@ -351,6 +356,7 @@ export function IssueBoard({
           {activeIssue && (
             <IssueCard
               issue={activeIssue}
+              subIssues={subIssuesByParent.get(activeIssue.id)}
               projectKey={project.key}
               members={members}
               labels={labels}
@@ -401,12 +407,14 @@ function BoardColumn({
 
 function SortableCard({
   issue,
+  subIssues,
   projectKey,
   workspaceSlug,
   members,
   labels,
 }: {
   issue: Issue;
+  subIssues?: Issue[];
   projectKey: string;
   workspaceSlug: string;
   members: Member[];
@@ -451,6 +459,7 @@ function SortableCard({
     >
       <IssueCard
         issue={issue}
+        subIssues={subIssues}
         projectKey={projectKey}
         members={members}
         labels={labels}
@@ -492,6 +501,7 @@ function SortableCard({
 // controls가 없으면(끌고 있는 카드의 미리보기, 저장 전 카드) 같은 자리에 아이콘만 보여준다.
 function IssueCard({
   issue,
+  subIssues,
   projectKey,
   members,
   labels,
@@ -500,6 +510,7 @@ function IssueCard({
   className,
 }: {
   issue: Issue;
+  subIssues?: Issue[];
   projectKey: string;
   members: Member[];
   labels: Label[];
@@ -521,9 +532,14 @@ function IssueCard({
         className,
       )}
     >
-      <span className="font-mono text-xs text-muted-foreground">
-        {pending ? `${projectKey}-…` : formatIssueRef(projectKey, issue.number)}
-      </span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-mono text-xs text-muted-foreground">
+          {pending
+            ? `${projectKey}-…`
+            : formatIssueRef(projectKey, issue.number)}
+        </span>
+        {subIssues && <SubIssueProgress {...subIssueProgress(subIssues)} />}
+      </div>
       {href ? (
         // 카드 전체가 드래그 손잡이라 링크는 키보드 포커스에서 뺀다. 키보드로는 카드에서 Enter로 연다.
         <Link
