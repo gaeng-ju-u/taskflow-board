@@ -57,6 +57,7 @@ export function IssueTimeline({
   members,
   labels,
   issueRef,
+  cycleName,
   initialComments,
   initialActivities,
 }: {
@@ -66,6 +67,7 @@ export function IssueTimeline({
   members: Member[];
   labels: Label[];
   issueRef: (id: string) => string | null;
+  cycleName: (id: string) => string | null;
   initialComments: Comment[];
   initialActivities: Activity[];
 }) {
@@ -91,6 +93,7 @@ export function IssueTimeline({
             members,
             labels,
             issueRef,
+            cycleName,
           });
           return text
             ? [{ kind: "activity", at: activity.created_at, activity, text }]

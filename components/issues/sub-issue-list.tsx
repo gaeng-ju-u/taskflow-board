@@ -6,7 +6,8 @@ import Link from "next/link";
 import { cn } from "cn";
 
 import { Button } from "@/components/ui/button";
-import { formatIssueRef, subIssueProgress, type Issue } from "@/lib/api/issues";
+import { formatIssueRef, issueProgress, type Issue } from "@/lib/api/issues";
+import type { Cycle } from "@/lib/api/cycles";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import { PENDING_NUMBER, useUpdateIssue } from "@/lib/queries/issues";
@@ -25,14 +26,16 @@ export function SubIssueList({
   project,
   workspaceSlug,
   members,
+  cycles,
 }: {
   parent: Issue;
   subIssues: Issue[];
   project: Pick<Project, "id" | "workspace_id" | "name" | "key">;
   workspaceSlug: string;
   members: Member[];
+  cycles: Cycle[];
 }) {
-  const { done, total } = subIssueProgress(subIssues);
+  const { done, total } = issueProgress(subIssues);
   const sorted = subIssues.toSorted((a, b) => {
     // 낙관적으로 추가된 이슈(번호 없음)는 맨 아래
     if (a.number === PENDING_NUMBER) return 1;
@@ -58,6 +61,9 @@ export function SubIssueList({
         <CreateIssueDialog
           project={project}
           members={members}
+          cycles={cycles}
+          // 하위 이슈는 상위 이슈와 같은 사이클에서 시작한다
+          defaultCycleId={parent.cycle_id}
           parent={{
             id: parent.id,
             ref: formatIssueRef(project.key, parent.number),

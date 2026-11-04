@@ -14,6 +14,7 @@ export type Issue = Pick<
   | "priority"
   | "assignee_id"
   | "parent_id"
+  | "cycle_id"
   | "sort_order"
   | "created_at"
   | "updated_at"
@@ -26,7 +27,7 @@ export type IssueStatus = Issue["status"];
 export type IssuePriority = Issue["priority"];
 
 export const ISSUE_COLUMNS =
-  "id, workspace_id, project_id, number, title, description, status, priority, assignee_id, parent_id, sort_order, created_at, updated_at, issue_labels(label_id)";
+  "id, workspace_id, project_id, number, title, description, status, priority, assignee_id, parent_id, cycle_id, sort_order, created_at, updated_at, issue_labels(label_id)";
 
 export async function listIssues(supabase: Supabase, projectId: string) {
   const { data, error } = await supabase
@@ -59,20 +60,31 @@ export function childIssues(issues: Issue[], parentId: string) {
 // 상위 이슈 id → 하위 이슈들. 목록·보드에서 행마다 전체를 훑지 않도록 한 번에 묶는다.
 // 필터 전의 전체 목록으로 만들어, 필터로 가려진 하위 이슈도 진행률에 들어간다.
 export function groupByParent(issues: Issue[]) {
+  return groupBy(issues, (issue) => issue.parent_id);
+}
+
+// 사이클 id → 배정된 이슈들. 사이클 탭의 카드별 진행률에 쓴다.
+export function groupByCycle(issues: Issue[]) {
+  return groupBy(issues, (issue) => issue.cycle_id);
+}
+
+// Map.groupBy는 Safari 17.4부터라 직접 묶는다. 키가 null이면 뺀다.
+function groupBy(issues: Issue[], keyOf: (issue: Issue) => string | null) {
   const groups = new Map<string, Issue[]>();
   for (const issue of issues) {
-    if (!issue.parent_id) continue;
-    const group = groups.get(issue.parent_id);
+    const key = keyOf(issue);
+    if (!key) continue;
+    const group = groups.get(key);
     if (group) group.push(issue);
-    else groups.set(issue.parent_id, [issue]);
+    else groups.set(key, [issue]);
   }
   return groups;
 }
 
-// 진행률: 완료 / (전체 - 취소). 취소한 일은 진행률을 깎지 않도록 분모에서 뺀다.
-export function subIssueProgress(children: Issue[]) {
-  const total = children.filter((issue) => issue.status !== "canceled").length;
-  const done = children.filter((issue) => issue.status === "done").length;
+// 진행률(하위 이슈, 사이클): 완료 / (전체 - 취소). 취소한 일은 진행률을 깎지 않도록 분모에서 뺀다.
+export function issueProgress(issues: Issue[]) {
+  const total = issues.filter((issue) => issue.status !== "canceled").length;
+  const done = issues.filter((issue) => issue.status === "done").length;
   return { done, total };
 }
 

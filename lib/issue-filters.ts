@@ -1,10 +1,11 @@
 import { z } from "zod";
 
+import type { Cycle } from "@/lib/api/cycles";
 import type { Issue, IssuePriority, IssueStatus } from "@/lib/api/issues";
 import { Constants } from "@/lib/supabase/database.types";
 
 // 목록·보드의 필터, 정렬, 그룹 상태. URL search params에 저장한다(CLAUDE.md).
-// 예: ?status=todo,in_progress&assignee=me,none&label=<id>&q=로그인&sort=updated&group=priority
+// 예: ?status=todo,in_progress&assignee=me,none&label=<id>&cycle=<id>&q=로그인&sort=updated&group=priority
 
 export const SORT_KEYS = [
   "manual",
@@ -27,12 +28,15 @@ export type GroupKey = (typeof GROUP_KEYS)[number];
 // 담당자 필터의 특수 값. 'me'는 보는 사람 자신이라, 링크를 공유하면 받은 사람의 이슈가 보인다.
 export const ASSIGNEE_ME = "me";
 export const ASSIGNEE_NONE = "none";
+// 사이클 필터의 "사이클 없음"
+export const CYCLE_NONE = "none";
 
 export type IssueFilters = {
   status: IssueStatus[];
   priority: IssuePriority[];
   assignee: string[];
   label: string[];
+  cycle: string[];
   q: string;
   sort: SortKey;
   group: GroupKey;
@@ -43,6 +47,7 @@ export const DEFAULT_FILTERS: IssueFilters = {
   priority: [],
   assignee: [],
   label: [],
+  cycle: [],
   q: "",
   sort: "manual",
   group: "status",
@@ -68,6 +73,7 @@ const assigneeSchema = z.union([
   z.literal(ASSIGNEE_NONE),
   idSchema,
 ]);
+const cycleSchema = z.union([z.literal(CYCLE_NONE), idSchema]);
 
 export function parseIssueFilters(params: URLSearchParams): IssueFilters {
   const sort = z.enum(SORT_KEYS).safeParse(params.get("sort"));
@@ -77,6 +83,7 @@ export function parseIssueFilters(params: URLSearchParams): IssueFilters {
     priority: list(params.get("priority"), prioritySchema),
     assignee: list(params.get("assignee"), assigneeSchema),
     label: list(params.get("label"), idSchema),
+    cycle: list(params.get("cycle"), cycleSchema),
     q: (params.get("q") ?? "").slice(0, 200),
     sort: sort.success ? sort.data : DEFAULT_FILTERS.sort,
     group: group.success ? group.data : DEFAULT_FILTERS.group,
@@ -95,6 +102,7 @@ export function writeIssueFilters(
   set("priority", filters.priority.join(","));
   set("assignee", filters.assignee.join(","));
   set("label", filters.label.join(","));
+  set("cycle", filters.cycle.join(","));
   set("q", filters.q.trim());
   set("sort", filters.sort === DEFAULT_FILTERS.sort ? "" : filters.sort);
   set("group", filters.group === DEFAULT_FILTERS.group ? "" : filters.group);
@@ -107,6 +115,7 @@ export const CLEARED_FILTERS = {
   priority: [],
   assignee: [],
   label: [],
+  cycle: [],
   q: "",
 } satisfies Partial<IssueFilters>;
 
@@ -116,16 +125,27 @@ export function activeFilterCount(filters: IssueFilters) {
     filters.priority.length +
     filters.assignee.length +
     filters.label.length +
+    filters.cycle.length +
     (filters.q.trim() ? 1 : 0)
   );
 }
 
+// 사이클 필터가 사이클 하나만 가리키면 그 사이클. 목록·보드 위의 요약과 새 이슈의 기본 사이클에 쓴다.
+export function singleFilteredCycle(filters: IssueFilters, cycles: Cycle[]) {
+  if (filters.cycle.length !== 1) return undefined;
+  return cycles.find((cycle) => cycle.id === filters.cycle[0]);
+}
+
 // 같은 종류 안에서는 "또는", 종류끼리는 "그리고"로 묶는다.
-// labelIds: 지금 있는 라벨 id. 지워진 라벨이 URL에 남아 있으면 그 조건은 무시한다.
+// labelIds, cycleIds: 지금 있는 라벨·사이클 id. 지워진 라벨·사이클이 URL에 남아 있으면 그 조건은 무시한다.
 export function filterIssues(
   issues: Issue[],
   filters: IssueFilters,
-  context: { currentUserId: string; labelIds: Set<string> },
+  context: {
+    currentUserId: string;
+    labelIds: Set<string>;
+    cycleIds: Set<string>;
+  },
 ): Issue[] {
   const assignees = new Set(
     filters.assignee.map((value) =>
@@ -133,6 +153,9 @@ export function filterIssues(
     ),
   );
   const labels = filters.label.filter((id) => context.labelIds.has(id));
+  const cycles = filters.cycle.filter(
+    (value) => value === CYCLE_NONE || context.cycleIds.has(value),
+  );
   const keyword = filters.q.trim().toLowerCase();
 
   return issues.filter((issue) => {
@@ -146,6 +169,8 @@ export function filterIssues(
       labels.length &&
       !issue.issue_labels.some((item) => labels.includes(item.label_id))
     )
+      return false;
+    if (cycles.length && !cycles.includes(issue.cycle_id ?? CYCLE_NONE))
       return false;
     if (keyword && !issue.title.toLowerCase().includes(keyword)) return false;
     return true;

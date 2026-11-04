@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { queryKeys } from "@/lib/queries/keys";
 import {
   applyCommentChange,
+  applyCycleChange,
   applyIssueChange,
   applyIssueLabelChange,
   applyLabelChange,
@@ -58,6 +59,11 @@ export function RealtimeSync({ workspaceId }: { workspaceId: string }) {
         "postgres_changes",
         { event: "*", schema: "public", table: "labels", filter },
         () => applyLabelChange(ctx),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cycles", filter },
+        () => applyCycleChange(ctx),
       )
       .on(
         "postgres_changes",

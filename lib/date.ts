@@ -17,6 +17,12 @@ function seoulParts(iso: string) {
   return values as Record<"year" | "month" | "day" | "hour" | "minute", string>;
 }
 
+// 서울 기준 오늘 "YYYY-MM-DD" (사이클의 date 컬럼과 같은 형식). now를 받아 렌더 중에 Date.now()를 부르지 않게 한다.
+export function todayInSeoul(now: number) {
+  const { year, month, day } = seoulParts(new Date(now).toISOString());
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
 // 2026년 10월 14일
 export function formatDate(iso: string) {
   const { year, month, day } = seoulParts(iso);

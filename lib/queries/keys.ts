@@ -12,6 +12,11 @@ export const queryKeys = {
     [...queryKeys.workspace(workspaceId), "invitations"] as const,
   labels: (workspaceId: string) =>
     [...queryKeys.workspace(workspaceId), "labels"] as const,
+  // 사이클은 프로젝트별로 불러온다. 목록 전체 키(cycleLists)는 Realtime 변경 때 한 번에 다시 불러오는 데 쓴다.
+  cycleLists: (workspaceId: string) =>
+    [...queryKeys.workspace(workspaceId), "cycles"] as const,
+  cycles: (workspaceId: string, projectId: string) =>
+    [...queryKeys.cycleLists(workspaceId), projectId] as const,
   issues: (workspaceId: string) =>
     [...queryKeys.workspace(workspaceId), "issues"] as const,
   // 모든 프로젝트의 이슈 목록. 프로젝트를 모르는 변경(Realtime 삭제 이벤트)을 반영할 때 쓴다.

@@ -36,7 +36,7 @@
 - `labels` (workspace_id, name, color), `issue_labels` (issue_id, label_id)
 - `comments` (issue_id, author_id, body)
 - `activities` (issue_id, actor_id, type, payload jsonb): DB 트리거로 자동 기록
-- `cycles` (project_id, name, starts_at, ends_at)
+- `cycles` (project_id, workspace_id, name, starts_at, ends_at): 같은 프로젝트 안에서 기간이 겹치지 않음(exclusion constraint)
 
 **RLS**: 모든 테이블에 "해당 workspace 멤버만 읽기/쓰기" 정책. 헬퍼 함수(`private.is_workspace_member` 등)는 API에 노출되지 않는 `private` 스키마에 둔다. `issues`, `comments`는 RLS와 Realtime 필터를 위해 `workspace_id`를 비정규화했다(트리거가 채움). 초대 수락은 `accept_invitation(token)` RPC로 한다. 검증: `npm run test:db`
 **이슈 번호**: `TF-123` 형식. insert 트리거가 `projects.issue_seq`를 증가시켜 번호를 매긴다.
@@ -51,7 +51,7 @@ app/
   (app)/[workspace]/projects/[key]/board/page.tsx    칸반 보드
   (app)/[workspace]/projects/[key]/list/page.tsx     리스트 뷰
   (app)/[workspace]/issues/[id]/page.tsx             이슈 상세
-  (app)/[workspace]/cycles/[id]/page.tsx             사이클 상세
+  (app)/[workspace]/projects/[key]/cycles/page.tsx   사이클 목록 (카드를 누르면 목록 ?cycle=<id> 필터)
   (app)/[workspace]/settings/members/page.tsx        멤버 관리
   invite/[token]/page.tsx                            초대 수락
 proxy.ts                                             비로그인 리다이렉트
@@ -86,7 +86,7 @@ proxy.ts                                             비로그인 리다이렉�
 ### 3주차: 확장과 마감 (밀리면 여기서 자른다)
 
 - [x] 서브이슈: 상위 이슈 지정·해제(검색 선택기, 여러 단계, 순환 방지), 상세의 하위 이슈 목록·추가, 진행률(취소 제외) 목록·보드·상세 표시 (pgTAP 7개 추가)
-- [ ] 사이클 (생성, 이슈 배정, 진행률)
+- [x] 사이클: 사이클 탭(진행 중·예정·완료, 생성·수정·삭제, 진행률·남은 일수·미완료 수), 기간 겹침 금지(DB 제약), 목록·보드 사이클 필터와 요약 줄, 이슈 상세·생성의 사이클 선택, Realtime 반영 (pgTAP 13개 추가)
 - [ ] 데모 모드: 시드 데이터 워크스페이스, 원클릭 데모 로그인, 주기적 초기화
 - [ ] 빈 상태, 로딩 스켈레톤, 에러 바운더리, 반응형
 - [ ] README: 스크린샷/GIF, 아키텍처, 기술적 결정과 이유

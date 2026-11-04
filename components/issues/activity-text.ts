@@ -20,11 +20,14 @@ export function describeActivity(
     members,
     labels,
     issueRef,
+    cycleName,
   }: {
     members: Member[];
     labels: Label[];
     // 이슈 id → "TF-3". 지워졌거나 모르는 이슈면 null.
     issueRef: (id: string) => string | null;
+    // 사이클 id → 이름. 지워졌거나 모르는 사이클이면 null.
+    cycleName: (id: string) => string | null;
   },
 ): string | null {
   const payload = isPayload(activity.payload) ? activity.payload : {};
@@ -80,8 +83,14 @@ export function describeActivity(
             ? `상위 이슈를 지정했습니다: ${ref}`
             : "상위 이슈를 지정했습니다";
         }
-        case "cycle_id":
-          return "사이클을 바꿨습니다";
+        case "cycle_id": {
+          const to = text(payload.to);
+          if (!to) return "사이클을 해제했습니다";
+          const name = cycleName(to);
+          return name
+            ? `사이클을 지정했습니다: ${name}`
+            : "사이클을 지정했습니다";
+        }
         default:
           return null;
       }

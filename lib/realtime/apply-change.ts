@@ -31,10 +31,16 @@ export type ChangeContext = {
 type Payload<T extends Record<string, unknown>> =
   RealtimePostgresChangesPayload<T>;
 
-// 라벨·프로젝트 목록은 작아서 캐시를 고치지 않고 다시 불러온다.
+// 라벨·사이클·프로젝트 목록은 작아서 캐시를 고치지 않고 다시 불러온다.
 export function applyLabelChange(ctx: ChangeContext) {
   return ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.labels(ctx.workspaceId),
+  });
+}
+
+export function applyCycleChange(ctx: ChangeContext) {
+  return ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.cycleLists(ctx.workspaceId),
   });
 }
 

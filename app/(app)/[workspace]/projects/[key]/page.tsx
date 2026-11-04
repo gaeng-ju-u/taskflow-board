@@ -25,7 +25,7 @@ export default function ProjectListPage({
 }
 
 async function ProjectIssues({ params }: { params: Params }) {
-  const { workspace, project, issues, members, labels, user } =
+  const { workspace, project, issues, members, labels, cycles, user } =
     await loadProjectIssues(params);
   return (
     <IssueList
@@ -35,6 +35,7 @@ async function ProjectIssues({ params }: { params: Params }) {
       initialIssues={issues}
       initialMembers={members}
       initialLabels={labels}
+      initialCycles={cycles}
     />
   );
 }

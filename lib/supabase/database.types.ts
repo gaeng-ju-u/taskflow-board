@@ -151,6 +151,7 @@ export type Database = {
           name: string
           project_id: string
           starts_at: string
+          workspace_id: string
         }
         Insert: {
           created_at?: string
@@ -159,6 +160,7 @@ export type Database = {
           name: string
           project_id: string
           starts_at: string
+          workspace_id: string
         }
         Update: {
           created_at?: string
@@ -167,6 +169,7 @@ export type Database = {
           name?: string
           project_id?: string
           starts_at?: string
+          workspace_id?: string
         }
         Relationships: [
           {
@@ -174,6 +177,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cycles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]

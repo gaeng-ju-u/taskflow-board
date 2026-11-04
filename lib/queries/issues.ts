@@ -30,6 +30,7 @@ export type IssuePatch = Partial<
     | "priority"
     | "assignee_id"
     | "parent_id"
+    | "cycle_id"
     | "sort_order"
   >
 >;
@@ -212,6 +213,7 @@ export function useUpdateIssue(workspaceId: string) {
 function updateErrorMessage(error: MutationError, patch: IssuePatch) {
   if (!hasErrorCode(error, "23514")) return "이슈를 수정하지 못했습니다.";
   if ("parent_id" in patch) return "이 이슈를 상위 이슈로 지정할 수 없습니다.";
+  if ("cycle_id" in patch) return "사이클은 같은 프로젝트에 있어야 합니다.";
   return "담당자는 워크스페이스 멤버여야 합니다.";
 }
 
