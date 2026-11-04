@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IterationCwIcon,
   ListFilterIcon,
   SearchIcon,
   SlidersHorizontalIcon,
@@ -27,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import type { Cycle } from "@/lib/api/cycles";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import {
@@ -34,6 +36,7 @@ import {
   ASSIGNEE_ME,
   ASSIGNEE_NONE,
   CLEARED_FILTERS,
+  CYCLE_NONE,
   DEFAULT_FILTERS,
   GROUP_KEYS,
   SORT_KEYS,
@@ -66,7 +69,7 @@ export const GROUP_LABELS: Record<GroupKey, string> = {
   none: "그룹 없음",
 };
 
-type ListKey = "status" | "priority" | "assignee" | "label";
+type ListKey = "status" | "priority" | "assignee" | "label" | "cycle";
 
 // 목록과 보드 위의 필터 막대. 정렬·그룹(표시 메뉴)은 목록에서만 쓴다(보드는 칸이 상태, 순서는 드래그).
 export function IssueFilterBar({
@@ -74,6 +77,7 @@ export function IssueFilterBar({
   setFilters,
   members,
   labels,
+  cycles,
   currentUserId,
   showDisplayOptions,
   summary,
@@ -83,6 +87,7 @@ export function IssueFilterBar({
   setFilters: (patch: Partial<IssueFilters>) => void;
   members: Member[];
   labels: Label[];
+  cycles: Cycle[];
   currentUserId: string;
   showDisplayOptions: boolean;
   summary: ReactNode;
@@ -127,6 +132,15 @@ export function IssueFilterBar({
       title: "라벨",
       values: filters.label.flatMap(
         (id) => labels.find((label) => label.id === id)?.name ?? [],
+      ),
+    },
+    {
+      key: "cycle" as const,
+      title: "사이클",
+      values: filters.cycle.flatMap((value) =>
+        value === CYCLE_NONE
+          ? "사이클 없음"
+          : (cycles.find((cycle) => cycle.id === value)?.name ?? []),
       ),
     },
   ].filter((chip) => chip.values.length > 0);
@@ -231,6 +245,29 @@ export function IssueFilterBar({
                     </DropdownMenuCheckboxItem>
                   ))
                 )}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>사이클</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-80 max-w-64 min-w-40 overflow-y-auto">
+                <DropdownMenuCheckboxItem
+                  checked={filters.cycle.includes(CYCLE_NONE)}
+                  onCheckedChange={() => toggle("cycle", CYCLE_NONE)}
+                >
+                  <IterationCwIcon className="text-muted-foreground" />
+                  사이클 없음
+                </DropdownMenuCheckboxItem>
+                {cycles.length > 0 && <DropdownMenuSeparator />}
+                {/* 최근 사이클이 위에 오도록 시작일의 역순 */}
+                {cycles.toReversed().map((cycle) => (
+                  <DropdownMenuCheckboxItem
+                    key={cycle.id}
+                    checked={filters.cycle.includes(cycle.id)}
+                    onCheckedChange={() => toggle("cycle", cycle.id)}
+                  >
+                    <span className="truncate">{cycle.name}</span>
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           </DropdownMenuContent>

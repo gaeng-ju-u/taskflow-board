@@ -38,22 +38,27 @@ import {
   formatIssueRef,
   groupByParent,
   sortOrderBetween,
-  subIssueProgress,
+  issueProgress,
   type Issue,
   type IssueStatus,
 } from "@/lib/api/issues";
+import { cyclesPath, type Cycle } from "@/lib/api/cycles";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
-import { filterIssues } from "@/lib/issue-filters";
+import { filterIssues, singleFilteredCycle } from "@/lib/issue-filters";
 import {
   PENDING_NUMBER,
   useIssues,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useCycles } from "@/lib/queries/cycles";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 import { useHighlighted } from "@/lib/realtime/highlight";
+
+import { CycleSummary } from "@/components/cycles/cycle-summary";
+import { projectPath } from "@/components/projects/types";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
@@ -123,6 +128,7 @@ export function IssueBoard({
   initialIssues,
   initialMembers,
   initialLabels,
+  initialCycles,
 }: {
   workspaceSlug: string;
   project: Project;
@@ -130,6 +136,7 @@ export function IssueBoard({
   initialIssues: Issue[];
   initialMembers: Member[];
   initialLabels: Label[];
+  initialCycles: Cycle[];
 }) {
   const { data: issues = initialIssues } = useIssues(
     project.workspace_id,
@@ -144,6 +151,11 @@ export function IssueBoard({
     project.workspace_id,
     initialLabels,
   );
+  const { data: cycles = initialCycles } = useCycles(
+    project.workspace_id,
+    project.id,
+    initialCycles,
+  );
   const updateIssue = useUpdateIssue(project.workspace_id);
 
   const byId = useMemo(
@@ -156,10 +168,15 @@ export function IssueBoard({
     () => new Set(labels.map((label) => label.id)),
     [labels],
   );
-  const visible = useMemo(
-    () => filterIssues(issues, filters, { currentUserId, labelIds }),
-    [issues, filters, currentUserId, labelIds],
+  const cycleIds = useMemo(
+    () => new Set(cycles.map((cycle) => cycle.id)),
+    [cycles],
   );
+  const visible = useMemo(
+    () => filterIssues(issues, filters, { currentUserId, labelIds, cycleIds }),
+    [issues, filters, currentUserId, labelIds, cycleIds],
+  );
+  const filteredCycle = singleFilteredCycle(filters, cycles);
   const cached = useMemo(() => groupIssues(visible), [visible]);
   const subIssuesByParent = useMemo(() => groupByParent(issues), [issues]);
   // 드래그 중과 놓은 뒤 저장이 끝날 때까지는 이 배치를 보여준다. 놓자마자 지우면 캐시에 반영되기 전
@@ -280,6 +297,7 @@ export function IssueBoard({
         setFilters={setFilters}
         members={members}
         labels={labels}
+        cycles={cycles}
         currentUserId={currentUserId}
         showDisplayOptions={false}
         summary={
@@ -291,6 +309,8 @@ export function IssueBoard({
           <CreateIssueDialog
             project={project}
             members={members}
+            cycles={cycles}
+            defaultCycleId={filteredCycle?.id ?? null}
             trigger={
               <Button size="sm">
                 <PlusIcon />새 이슈
@@ -299,6 +319,13 @@ export function IssueBoard({
           />
         }
       />
+      {filteredCycle && (
+        <CycleSummary
+          cycle={filteredCycle}
+          issues={issues}
+          cyclesHref={cyclesPath(projectPath(workspaceSlug, project.key))}
+        />
+      )}
 
       {/* id를 고정해야 서버와 클라이언트의 접근성 속성 id가 같아져 hydration 경고가 나지 않는다. */}
       <DndContext
@@ -538,7 +565,7 @@ function IssueCard({
             ? `${projectKey}-…`
             : formatIssueRef(projectKey, issue.number)}
         </span>
-        {subIssues && <SubIssueProgress {...subIssueProgress(subIssues)} />}
+        {subIssues && <SubIssueProgress {...issueProgress(subIssues)} />}
       </div>
       {href ? (
         // 카드 전체가 드래그 손잡이라 링크는 키보드 포커스에서 뺀다. 키보드로는 카드에서 Enter로 연다.

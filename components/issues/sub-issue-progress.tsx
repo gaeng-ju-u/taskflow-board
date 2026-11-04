@@ -1,6 +1,6 @@
 import { cn } from "cn";
 
-// 하위 이슈 진행률: 작은 원형 막대 + "완료/전체". 전체에서 취소한 이슈는 뺀다 (subIssueProgress).
+// 하위 이슈 진행률: 작은 원형 막대 + "완료/전체". 전체에서 취소한 이슈는 뺀다 (issueProgress).
 export function SubIssueProgress({
   done,
   total,

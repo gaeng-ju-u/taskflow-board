@@ -2,6 +2,7 @@
 
 import { useState, type ReactElement } from "react";
 
+import { CycleSelect } from "@/components/cycles/cycle-select";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type { Cycle } from "@/lib/api/cycles";
 import type { Project } from "@/lib/api/projects";
 import type { IssuePriority, IssueStatus } from "@/lib/api/issues";
 import type { Member } from "@/lib/api/members";
@@ -32,16 +34,22 @@ const EMPTY = {
   status: "todo" as IssueStatus,
   priority: "none" as IssuePriority,
   assignee_id: null as string | null,
+  cycle_id: null as string | null,
 };
 
 export function CreateIssueDialog({
   project,
   members,
+  cycles,
+  defaultCycleId = null,
   parent,
   trigger,
 }: {
   project: Pick<Project, "id" | "workspace_id" | "name" | "key">;
   members: Member[];
+  cycles: Cycle[];
+  // 열 때 고른 상태로 둘 사이클 (사이클로 필터링한 목록, 상위 이슈의 사이클)
+  defaultCycleId?: string | null;
   // 주면 그 이슈의 하위 이슈로 만든다. ref는 제목에 보여줄 "TF-3".
   parent?: { id: string; ref: string };
   trigger: ReactElement;
@@ -84,7 +92,9 @@ export function CreateIssueDialog({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) {
+        if (next) {
+          setForm({ ...EMPTY, cycle_id: defaultCycleId });
+        } else {
           setForm(EMPTY);
           setError(undefined);
         }
@@ -150,6 +160,13 @@ export function CreateIssueDialog({
               onChange={(value) => update("assignee_id", value)}
               members={members}
             />
+            {cycles.length > 0 && (
+              <CycleSelect
+                value={form.cycle_id}
+                cycles={cycles}
+                onChange={(value) => update("cycle_id", value)}
+              />
+            )}
           </div>
 
           <DialogFooter>

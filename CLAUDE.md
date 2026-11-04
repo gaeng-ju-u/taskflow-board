@@ -67,6 +67,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 그 자리에서 편집하는 필드(제목, 설명)는 입력값을 편집 중·저장 중에만 보여주고, 저장이 끝나면(`onSettled`) 버리고 캐시 값을 보여준다 (`components/issues/issue-detail.tsx`의 `useEditableText`). 입력값을 계속 들고 있으면 저장 실패 시 롤백된 값이 화면에 나타나지 않는다.
 - 마크다운(설명, 코멘트)은 `components/issues/markdown.tsx`의 `Markdown`으로 렌더한다. 요소별 스타일은 토큰 클래스로 주고, 원본 HTML은 렌더하지 않는다(react-markdown 기본값 유지, rehype-raw 금지). 줄바꿈은 입력한 그대로 보이게 한다: 엔터 한 번은 줄바꿈(remark-breaks), 빈 줄 여러 개는 개수만큼 보존(`preserveBlankLines`), 블록 간격은 한 줄 높이(`mt-[1lh]`).
 - 활동 로그 쿼리 키는 이슈 상세 키 아래(`queryKeys.activities`)에 둔다. 이슈를 수정하는 뮤테이션이 상세 키를 무효화하면 함께 다시 불러오므로 뮤테이션마다 따로 무효화하지 않는다.
+- 날짜만 있는 값(사이클 기간, DB `date`)은 `"YYYY-MM-DD"` 문자열 그대로 비교·계산하고(`lib/api/cycles.ts`), 오늘은 `todayInSeoul(useNow())`로 구한다(`lib/date.ts`). `new Date("2026-11-04")`는 UTC 자정이라 시간대에 따라 날짜가 하루 어긋날 수 있다.
 - 상대 시간("3분 전")은 렌더 중 `Date.now()` 대신 `hooks/use-now.ts`의 `useNow()`를 쓰고, `<time>`에 `suppressHydrationWarning`을 준다(서버와 브라우저의 현재 시각 차이).
 - 드롭다운 메뉴 너비는 기본값이 트리거 버튼 너비다. 아이콘 버튼에서 여는 메뉴는 `w-auto min-w-40` 등으로 내용 너비를 준다.
 - 하나만 고르는 드롭다운(`DropdownMenuRadioItem`)은 `closeOnClick`을 준다. Base UI 기본값은 골라도 닫히지 않음이다.

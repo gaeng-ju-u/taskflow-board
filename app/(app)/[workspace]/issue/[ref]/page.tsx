@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { getActivities, getComments } from "@/lib/data/activity";
 import { getCurrentUser } from "@/lib/data/auth";
+import { getCycles } from "@/lib/data/cycles";
 import { getIssueByRef, getIssues } from "@/lib/data/issues";
 import { getLabels } from "@/lib/data/labels";
 import { getMembers } from "@/lib/data/members";
@@ -42,10 +43,11 @@ async function IssueContent({
     getCurrentUser(),
   ]);
   // 프로젝트 이슈 목록은 상위·하위 이슈 표시에 쓴다 (목록·보드와 같은 캐시).
-  const [comments, activities, issues] = await Promise.all([
+  const [comments, activities, issues, cycles] = await Promise.all([
     getComments(issue.id),
     getActivities(issue.id),
     getIssues(project.id),
+    getCycles(project.id),
   ]);
   return (
     <IssueDetail
@@ -53,6 +55,7 @@ async function IssueContent({
       project={project}
       initialIssue={issue}
       initialIssues={issues}
+      initialCycles={cycles}
       initialMembers={members}
       initialLabels={labels}
       initialComments={comments}

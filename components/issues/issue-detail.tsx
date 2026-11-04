@@ -9,6 +9,7 @@ import type { z } from "zod";
 
 import { cn } from "cn";
 
+import { CycleSelect } from "@/components/cycles/cycle-select";
 import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
 import { projectPath } from "@/components/projects/types";
 import { PresenceAvatars } from "@/components/realtime/presence-avatars";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { childIssues, formatIssueRef, type Issue } from "@/lib/api/issues";
 import type { Activity, Comment } from "@/lib/api/activity";
+import type { Cycle } from "@/lib/api/cycles";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import {
@@ -34,6 +36,7 @@ import {
   useIssues,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useCycles } from "@/lib/queries/cycles";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 import { realtimeTopics } from "@/lib/realtime/topics";
@@ -60,6 +63,7 @@ export function IssueDetail({
   project,
   initialIssue,
   initialIssues,
+  initialCycles,
   initialMembers,
   initialLabels,
   initialComments,
@@ -70,6 +74,7 @@ export function IssueDetail({
   project: ProjectRef;
   initialIssue: Issue;
   initialIssues: Issue[];
+  initialCycles: Cycle[];
   initialMembers: Member[];
   initialLabels: Label[];
   initialComments: Comment[];
@@ -82,6 +87,11 @@ export function IssueDetail({
     workspaceId,
     project.id,
     initialIssues,
+  );
+  const { data: cycles = initialCycles } = useCycles(
+    workspaceId,
+    project.id,
+    initialCycles,
   );
   const { data: members = initialMembers } = useMembers(
     workspaceId,
@@ -176,6 +186,7 @@ export function IssueDetail({
           project={{ ...project, workspace_id: workspaceId }}
           workspaceSlug={workspaceSlug}
           members={members}
+          cycles={cycles}
         />
         <IssueTimeline
           workspaceId={workspaceId}
@@ -184,6 +195,9 @@ export function IssueDetail({
           members={members}
           labels={labels}
           issueRef={issueRef}
+          cycleName={(id) =>
+            cycles.find((cycle) => cycle.id === id)?.name ?? null
+          }
           initialComments={initialComments}
           initialActivities={initialActivities}
         />
@@ -225,6 +239,15 @@ export function IssueDetail({
             projectKey={project.key}
             onChange={(parent_id) =>
               updateIssue.mutate({ issue, patch: { parent_id } })
+            }
+          />
+        </Property>
+        <Property label="사이클">
+          <CycleSelect
+            value={issue.cycle_id}
+            cycles={cycles}
+            onChange={(cycle_id) =>
+              updateIssue.mutate({ issue, patch: { cycle_id } })
             }
           />
         </Property>

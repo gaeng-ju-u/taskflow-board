@@ -16,15 +16,17 @@ import { Button } from "@/components/ui/button";
 import {
   formatIssueRef,
   groupByParent,
-  subIssueProgress,
+  issueProgress,
   type Issue,
 } from "@/lib/api/issues";
+import { cyclesPath, type Cycle } from "@/lib/api/cycles";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
 import {
   CLEARED_FILTERS,
   filterIssues,
+  singleFilteredCycle,
   sortIssues,
   type GroupKey,
 } from "@/lib/issue-filters";
@@ -33,9 +35,13 @@ import {
   useIssues,
   useUpdateIssue,
 } from "@/lib/queries/issues";
+import { useCycles } from "@/lib/queries/cycles";
 import { useLabels } from "@/lib/queries/labels";
 import { useMembers } from "@/lib/queries/members";
 import { useHighlighted } from "@/lib/realtime/highlight";
+
+import { CycleSummary } from "@/components/cycles/cycle-summary";
+import { projectPath } from "@/components/projects/types";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
@@ -65,6 +71,7 @@ export function IssueList({
   initialIssues,
   initialMembers,
   initialLabels,
+  initialCycles,
 }: {
   workspaceSlug: string;
   project: Project;
@@ -72,6 +79,7 @@ export function IssueList({
   initialIssues: Issue[];
   initialMembers: Member[];
   initialLabels: Label[];
+  initialCycles: Cycle[];
 }) {
   const { data: issues = initialIssues } = useIssues(
     project.workspace_id,
@@ -86,17 +94,24 @@ export function IssueList({
     project.workspace_id,
     initialLabels,
   );
+  const { data: cycles = initialCycles } = useCycles(
+    project.workspace_id,
+    project.id,
+    initialCycles,
+  );
   const { filters, setFilters } = useIssueFilters();
 
   const visible = sortIssues(
     filterIssues(issues, filters, {
       currentUserId,
       labelIds: new Set(labels.map((label) => label.id)),
+      cycleIds: new Set(cycles.map((cycle) => cycle.id)),
     }),
     filters.sort,
   );
   const groups = buildGroups(visible, filters.group, { members, labels });
   const subIssuesByParent = groupByParent(issues);
+  const filteredCycle = singleFilteredCycle(filters, cycles);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -106,6 +121,7 @@ export function IssueList({
         setFilters={setFilters}
         members={members}
         labels={labels}
+        cycles={cycles}
         currentUserId={currentUserId}
         showDisplayOptions
         summary={
@@ -117,6 +133,8 @@ export function IssueList({
           <CreateIssueDialog
             project={project}
             members={members}
+            cycles={cycles}
+            defaultCycleId={filteredCycle?.id ?? null}
             trigger={
               <Button size="sm">
                 <PlusIcon />새 이슈
@@ -125,6 +143,13 @@ export function IssueList({
           />
         }
       />
+      {filteredCycle && (
+        <CycleSummary
+          cycle={filteredCycle}
+          issues={issues}
+          cyclesHref={cyclesPath(projectPath(workspaceSlug, project.key))}
+        />
+      )}
 
       {issues.length === 0 ? (
         <div className="mx-6 flex flex-col items-center gap-1 rounded-lg border border-dashed py-16 text-center">
@@ -353,7 +378,7 @@ function IssueRow({
           {issue.title}
         </Link>
       )}
-      {subIssues && <SubIssueProgress {...subIssueProgress(subIssues)} />}
+      {subIssues && <SubIssueProgress {...issueProgress(subIssues)} />}
       <LabelChips
         labels={attached}
         max={2}
