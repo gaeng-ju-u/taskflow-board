@@ -75,7 +75,8 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 드래그 앤 드롭(dnd-kit, `components/issues/issue-board.tsx`): `DndContext`에 고정 `id`를 준다(hydration 경고 방지). 놓은 뒤의 임시 배치는 저장 요청이 끝날 때까지 유지한다(놓자마자 지우면 카드가 원래 자리로 튄다). 순서는 앞뒤 카드의 중간값(`sortOrderBetween`)으로 옮긴 카드 하나만 수정한다. 키보드는 스페이스바로 집기·놓기, Enter로 열기, ←/→로 칸 이동. 카드 안의 버튼은 `onPointerDown`에서 전파를 막아 드래그 시작을 막고, 카드 단축키는 `event.target === event.currentTarget`일 때만 처리한다(portal 메뉴의 React 이벤트도 카드로 올라온다).
 - 이미 적용된 마이그레이션은 수정하지 않고 새 마이그레이션을 추가한다. 스키마나 정책을 바꾸면 `supabase/tests/`도 갱신한다.
 - RLS 헬퍼 함수는 API에 노출되지 않는 `private` 스키마에 둔다. `security definer` 함수는 `set search_path = ''`로 만들고 이름을 스키마로 한정한다.
-- 환경 변수는 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (anon key 아님). `.env.local`의 값은 출력하지 않는다.
+- 환경 변수는 `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (anon key 아님), `DEMO_PASSWORD`(데모 계정 비밀번호, 서버 전용이라 `NEXT_PUBLIC` 아님). `.env.local`의 값은 출력하지 않는다.
+- 데모 모드: 모든 방문자가 공유 데모 계정(`lib/demo.ts`의 `DEMO_EMAIL`)으로 로그인하고, 데모 워크스페이스는 `private.reset_demo_workspace()`가 매시 정각(pg_cron) 고정 id로 다시 만든다. 데모 계정에서 막을 작업은 RLS가 아니라 `private.block_demo_user` 트리거로 막는다(RLS는 오류 없이 0행만 처리해 앱이 성공으로 오해함). 오류 코드 `TF001`은 `rollbackOptimistic`이 "데모 계정에서는 할 수 없는 작업입니다"로 알린다. 화면에서는 `getCurrentUser().isDemo`로 해당 버튼을 숨긴다. 시드 데이터를 바꾸면 `supabase/tests/demo.test.sql`의 개수도 갱신한다.
 - 금지: `any`, 클라이언트 코드에서 secret(service role) key 사용, 마이그레이션 없는 스키마 변경.
 
 ## 네이밍

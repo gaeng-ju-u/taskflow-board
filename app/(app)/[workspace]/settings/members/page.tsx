@@ -50,9 +50,9 @@ async function MembersContent({
     getCurrentUser(),
   ]);
   const members = await getMembers(workspace.id);
-  const isOwner = members.some(
-    (member) => member.id === user.id && member.role === "owner",
-  );
+  const isOwner =
+    !user.isDemo &&
+    members.some((member) => member.id === user.id && member.role === "owner");
   // 초대 목록은 owner만 조회할 수 있다 (RLS). member에게는 요청하지 않는다.
   const invitations = isOwner ? await getInvitations(workspace.id) : undefined;
 
@@ -62,6 +62,7 @@ async function MembersContent({
       currentUserId={user.id}
       initialMembers={members}
       initialInvitations={invitations}
+      isDemo={user.isDemo}
     />
   );
 }

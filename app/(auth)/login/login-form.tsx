@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useActionState } from "react";
 
+import { DemoSignInButton } from "@/components/auth/demo-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   oauth: "GitHub 로그인을 시작하지 못했습니다. 다시 시도하세요.",
   callback:
     "로그인 링크가 만료되었거나 다른 브라우저에서 열렸습니다. 다시 시도하세요.",
+  demo: "데모로 들어가지 못했습니다. 잠시 후 다시 시도하세요.",
 };
 
 function GithubIcon() {
@@ -66,6 +68,18 @@ export function LoginForm() {
       <Suspense>
         <CallbackError />
       </Suspense>
+
+      <div className="space-y-2">
+        <DemoSignInButton />
+        <p className="text-center text-xs text-muted-foreground">
+          가입 없이 샘플 데이터로 둘러봅니다. 데이터는 매시 정각에 초기화됩니다.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />내 계정으로
+        <span className="h-px flex-1 bg-border" />
+      </div>
 
       <form action={signInWithGithub}>
         <Suspense>

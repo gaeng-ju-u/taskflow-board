@@ -13,9 +13,11 @@ export function MemberSettings({
   currentUserId,
   initialMembers,
   initialInvitations,
+  isDemo,
 }: {
   workspaceId: string;
   currentUserId: string;
+  isDemo: boolean;
   initialMembers: Member[];
   initialInvitations: Invitation[] | undefined;
 }) {
@@ -23,12 +25,21 @@ export function MemberSettings({
     workspaceId,
     initialMembers,
   );
-  const isOwner = members.some(
-    (member) => member.id === currentUserId && member.role === "owner",
-  );
+  // 데모 계정은 owner지만 멤버 관리(초대, 역할, 내보내기, 나가기)를 할 수 없다 (DB 트리거가 막는다).
+  const isOwner =
+    !isDemo &&
+    members.some(
+      (member) => member.id === currentUserId && member.role === "owner",
+    );
 
   return (
     <div className="space-y-8">
+      {isDemo && (
+        <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          데모 계정에서는 멤버 초대, 역할 변경, 내보내기를 할 수 없습니다. 내
+          계정으로 로그인하면 팀원을 초대할 수 있습니다.
+        </p>
+      )}
       {isOwner && (
         <InvitationSection
           workspaceId={workspaceId}
@@ -40,6 +51,7 @@ export function MemberSettings({
         members={members}
         currentUserId={currentUserId}
         isOwner={isOwner}
+        canLeave={!isDemo}
       />
     </div>
   );

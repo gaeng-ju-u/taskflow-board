@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { UserMenu } from "@/components/auth/user-menu";
+import { DemoBanner } from "@/components/demo/demo-banner";
 import { ProjectNav } from "@/components/projects/project-nav";
 import { RealtimeSync } from "@/components/realtime/realtime-sync";
 import { SettingsNav } from "@/components/settings/settings-nav";
@@ -42,6 +43,9 @@ export default function WorkspaceLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <Suspense fallback={null}>
+          <DemoNotice />
+        </Suspense>
         <header className="flex h-14 items-center justify-between border-b px-4">
           <div className="md:invisible">
             <Suspense fallback={<NameSkeleton />}>
@@ -91,9 +95,23 @@ async function WorkspaceName({ params }: { params: Params }) {
 
 async function SidebarProjects({ params }: { params: Params }) {
   const { workspace: slug } = await params;
-  const workspace = await getWorkspaceBySlug(slug);
+  const [workspace, user] = await Promise.all([
+    getWorkspaceBySlug(slug),
+    getCurrentUser(),
+  ]);
   const projects = await getProjects(workspace.id);
-  return <ProjectNav workspace={workspace} initialProjects={projects} />;
+  return (
+    <ProjectNav
+      workspace={workspace}
+      initialProjects={projects}
+      canDelete={!user.isDemo}
+    />
+  );
+}
+
+async function DemoNotice() {
+  const user = await getCurrentUser();
+  return user.isDemo ? <DemoBanner /> : null;
 }
 
 async function WorkspaceRealtime({ params }: { params: Params }) {

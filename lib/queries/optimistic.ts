@@ -14,6 +14,9 @@ export class OfflineError extends Error {
 
 export type MutationError = PostgrestError | OfflineError;
 
+// 데모 계정이 막힌 작업을 하면 DB 트리거가 던지는 오류 코드
+const DEMO_BLOCKED_CODE = "TF001";
+
 export function hasErrorCode(error: MutationError, code: string) {
   return !(error instanceof OfflineError) && error.code === code;
 }
@@ -55,6 +58,9 @@ export function rollbackOptimistic<T>(
   toast.error(
     notify.error instanceof OfflineError
       ? "오프라인 상태라 저장할 수 없습니다. 인터넷 연결을 확인해 주세요."
-      : notify.message,
+      : // 데모 계정 제한(DB 트리거 private.block_demo_user)은 어느 뮤테이션이든 같은 문구로 알린다.
+        hasErrorCode(notify.error, DEMO_BLOCKED_CODE)
+        ? "데모 계정에서는 할 수 없는 작업입니다."
+        : notify.message,
   );
 }
