@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilIcon, TrashIcon } from "lucide-react";
+import { PencilIcon, TagIcon, TrashIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { nextLabelColor, type Label } from "@/lib/api/labels";
@@ -54,13 +55,11 @@ export function LabelSettings({
           </span>
         </h2>
         {labels.length === 0 ? (
-          <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed py-12 text-center">
-            <p className="font-medium">아직 라벨이 없습니다</p>
-            <p className="text-sm text-muted-foreground">
-              라벨을 만들어 이슈를 분류해 보세요. 이슈의 라벨 메뉴에서도 바로
-              만들 수 있습니다.
-            </p>
-          </div>
+          <EmptyState
+            icon={TagIcon}
+            title="아직 라벨이 없습니다"
+            description="라벨을 만들어 이슈를 분류해 보세요. 이슈의 라벨 메뉴에서도 바로 만들 수 있습니다."
+          />
         ) : (
           <ul className="divide-y rounded-lg border">
             {labels.map((label) => (

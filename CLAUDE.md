@@ -31,6 +31,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 
 - `components/ui/`: shadcn 컴포넌트. `printf 'n\n' | npx shadcn@latest add <name>`으로 추가한다 (기존 파일 덮어쓰기 질문에서 멈추지 않게). 생성된 파일은 필요할 때만 수정. 토스트는 `components/ui/toaster.tsx`(sonner + useTheme)를 쓰고 shadcn sonner는 쓰지 않는다 (next-themes 의존)
 - `components/<도메인>/`: 도메인 컴포넌트 (예: `components/issues/`, `components/board/`)
+- `components/common/`: 여러 도메인이 함께 쓰는 화면 조각. 빈 목록은 `EmptyState`, 화면 전체 안내(404·오류)는 `PageMessage`를 쓴다
 - `lib/supabase/server.ts`, `lib/supabase/client.ts`: Supabase 클라이언트는 여기서만 생성
 - `lib/data/`: Server Component용 데이터 함수 (`import "server-only"`, React `cache`로 요청 내 중복 제거). 예: `getCurrentUser`, `getWorkspaceBySlug`
 - `lib/api/`: 서버와 클라이언트가 함께 쓰는 조회 함수와 타입 (어느 Supabase 클라이언트든 받음). 예: `listProjects`, `Project`
@@ -59,6 +60,7 @@ Next.js 16 (App Router), React 19, TypeScript, Tailwind 4, shadcn/ui (Base UI �
 - 필터, 정렬, 그룹 상태는 URL search params에 둔다. 읽기·쓰기 규칙은 `lib/issue-filters.ts`(기본값은 URL에 쓰지 않음, 잘못된 값은 무시), 쓰기는 `window.history.replaceState`로 해서 서버에 화면을 다시 요청하지 않고 뒤로 가기 기록도 쌓지 않는다(`components/issues/use-issue-filters.ts`). URL의 id는 `z.guid()`로 형식만 검사한다(`z.uuid()`는 버전 자리가 0인 시드용 고정 id를 버림).
 - `'use client'`는 상호작용이 필요한 말단 컴포넌트에만 붙인다.
 - 인증 라우팅 가드는 `proxy.ts`에서 한다 (middleware 아님).
+- 404와 오류 화면: `app/not-found.tsx`(없는 주소·워크스페이스), `app/(app)/[workspace]/not-found.tsx`(없는 이슈·프로젝트, 사이드바 유지), `error.tsx`(같은 두 위치), `app/global-error.tsx`(루트 레이아웃 실패). Next 16의 `error.tsx`는 `{ error: unknown, retry }`를 받는다. `retry()`는 데이터를 다시 불러와 다시 그리고, `reset()`은 다시 불러오지 않는다.
 - 색은 토큰 클래스(`bg-background`, `text-muted-foreground` 등)로만 쓴다. `bg-white`, `text-gray-900` 같은 고정 색은 다크모드를 깨뜨린다. 예외: 라벨 색처럼 사용자가 고른 데이터 색은 인라인 스타일로 색 점에만 쓰고, 글자·테두리는 토큰 색을 쓴다(`components/labels/label-chip.tsx`).
 - 테마는 `lib/theme.ts`의 인라인 스크립트와 `hooks/use-theme.ts`로 처리한다 (next-themes 미사용). 클래스 병합은 `cn` 패키지의 `cn()`을 쓴다.
 - shadcn 컴포넌트를 다른 요소로 렌더할 때는 `asChild`가 아니라 Base UI의 `render` prop을 쓴다.
