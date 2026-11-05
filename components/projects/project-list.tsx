@@ -1,8 +1,9 @@
 "use client";
 
-import { PlusIcon } from "lucide-react";
+import { FolderKanbanIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import type { Project } from "@/lib/api/projects";
 import { useProjects } from "@/lib/queries/projects";
@@ -39,12 +40,11 @@ export function ProjectList({
         />
       </div>
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed py-16 text-center">
-          <p className="font-medium">아직 프로젝트가 없습니다</p>
-          <p className="text-sm text-muted-foreground">
-            프로젝트를 만들고 이슈를 관리해 보세요.
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderKanbanIcon}
+          title="아직 프로젝트가 없습니다"
+          description="프로젝트를 만들고 이슈를 관리해 보세요."
+        />
       ) : (
         <ProjectGrid projects={projects} workspaceSlug={workspace.slug} />
       )}

@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import { cn } from "cn";
 
+import { EmptyState } from "@/components/common/empty-state";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -122,13 +123,11 @@ export function CycleList({
       </div>
 
       {cycles.length === 0 ? (
-        <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed py-16 text-center">
-          <IterationCwIcon className="mb-2 size-6 text-muted-foreground" />
-          <p className="font-medium">아직 사이클이 없습니다</p>
-          <p className="text-sm text-muted-foreground">
-            일정 기간 동안 할 일을 묶어 진행 상황을 확인해 보세요.
-          </p>
-        </div>
+        <EmptyState
+          icon={IterationCwIcon}
+          title="아직 사이클이 없습니다"
+          description="일정 기간 동안 할 일을 묶어 진행 상황을 확인해 보세요."
+        />
       ) : (
         sections.map((section) => (
           <section

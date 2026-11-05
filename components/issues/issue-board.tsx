@@ -46,7 +46,11 @@ import { cyclesPath, type Cycle } from "@/lib/api/cycles";
 import type { Label } from "@/lib/api/labels";
 import type { Member } from "@/lib/api/members";
 import type { Project } from "@/lib/api/projects";
-import { filterIssues, singleFilteredCycle } from "@/lib/issue-filters";
+import {
+  CLEARED_FILTERS,
+  filterIssues,
+  singleFilteredCycle,
+} from "@/lib/issue-filters";
 import {
   PENDING_NUMBER,
   useIssues,
@@ -62,7 +66,7 @@ import { projectPath } from "@/components/projects/types";
 
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { IssueFilterBar } from "./issue-filter-bar";
-import { issuePath } from "./issue-list";
+import { issuePath, NoIssues, NoMatches } from "./issue-list";
 import { PRIORITY_META, STATUS_META } from "./issue-meta";
 import { SubIssueProgress } from "./sub-issue-progress";
 import {
@@ -327,71 +331,77 @@ export function IssueBoard({
         />
       )}
 
-      {/* id를 고정해야 서버와 클라이언트의 접근성 속성 id가 같아져 hydration 경고가 나지 않는다. */}
-      <DndContext
-        id="issue-board"
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        accessibility={{
-          announcements,
-          screenReaderInstructions: {
-            draggable:
-              "Enter를 누르면 이슈를 엽니다. 카드를 옮기려면 스페이스바로 집고, 방향키로 옮긴 뒤 다시 스페이스바로 놓습니다. Esc를 누르면 취소합니다.",
-          },
-        }}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragCancel={() => {
-          setActiveId(null);
-          setDraft(null);
-        }}
-      >
-        <div className="flex flex-1 gap-3 overflow-x-auto px-6 pb-6">
-          {BOARD_STATUSES.map((status) => (
-            <BoardColumn
-              key={status}
-              status={status}
-              count={columns[status].length}
-            >
-              <SortableContext
-                id={status}
-                items={columns[status]}
-                strategy={verticalListSortingStrategy}
+      {issues.length === 0 ? (
+        <NoIssues />
+      ) : visible.length === 0 ? (
+        <NoMatches onReset={() => setFilters(CLEARED_FILTERS)} />
+      ) : (
+        /* id를 고정해야 서버와 클라이언트의 접근성 속성 id가 같아져 hydration 경고가 나지 않는다. */
+        <DndContext
+          id="issue-board"
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          accessibility={{
+            announcements,
+            screenReaderInstructions: {
+              draggable:
+                "Enter를 누르면 이슈를 엽니다. 카드를 옮기려면 스페이스바로 집고, 방향키로 옮긴 뒤 다시 스페이스바로 놓습니다. Esc를 누르면 취소합니다.",
+            },
+          }}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => {
+            setActiveId(null);
+            setDraft(null);
+          }}
+        >
+          <div className="flex flex-1 gap-3 overflow-x-auto px-6 pb-6">
+            {BOARD_STATUSES.map((status) => (
+              <BoardColumn
+                key={status}
+                status={status}
+                count={columns[status].length}
               >
-                {columns[status].map((id) => {
-                  const issue = byId.get(id);
-                  if (!issue) return null;
-                  return (
-                    <SortableCard
-                      key={id}
-                      issue={issue}
-                      subIssues={subIssuesByParent.get(id)}
-                      projectKey={project.key}
-                      workspaceSlug={workspaceSlug}
-                      members={members}
-                      labels={labels}
-                    />
-                  );
-                })}
-              </SortableContext>
-            </BoardColumn>
-          ))}
-        </div>
+                <SortableContext
+                  id={status}
+                  items={columns[status]}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {columns[status].map((id) => {
+                    const issue = byId.get(id);
+                    if (!issue) return null;
+                    return (
+                      <SortableCard
+                        key={id}
+                        issue={issue}
+                        subIssues={subIssuesByParent.get(id)}
+                        projectKey={project.key}
+                        workspaceSlug={workspaceSlug}
+                        members={members}
+                        labels={labels}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </BoardColumn>
+            ))}
+          </div>
 
-        <DragOverlay>
-          {activeIssue && (
-            <IssueCard
-              issue={activeIssue}
-              subIssues={subIssuesByParent.get(activeIssue.id)}
-              projectKey={project.key}
-              members={members}
-              labels={labels}
-              className="rotate-2 shadow-lg"
-            />
-          )}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeIssue && (
+              <IssueCard
+                issue={activeIssue}
+                subIssues={subIssuesByParent.get(activeIssue.id)}
+                projectKey={project.key}
+                members={members}
+                labels={labels}
+                className="rotate-2 shadow-lg"
+              />
+            )}
+          </DragOverlay>
+        </DndContext>
+      )}
     </div>
   );
 }

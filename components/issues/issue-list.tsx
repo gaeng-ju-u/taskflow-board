@@ -1,11 +1,18 @@
 "use client";
 
-import { PlusIcon, TagIcon, UserRoundIcon } from "lucide-react";
+import {
+  ListTodoIcon,
+  PlusIcon,
+  SearchXIcon,
+  TagIcon,
+  UserRoundIcon,
+} from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { cn } from "cn";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { IssueLabelPicker } from "@/components/labels/issue-label-picker";
 import {
   issueLabels,
@@ -152,12 +159,7 @@ export function IssueList({
       )}
 
       {issues.length === 0 ? (
-        <div className="mx-6 flex flex-col items-center gap-1 rounded-lg border border-dashed py-16 text-center">
-          <p className="font-medium">아직 이슈가 없습니다</p>
-          <p className="text-sm text-muted-foreground">
-            새 이슈를 만들어 할 일을 기록해 보세요.
-          </p>
-        </div>
+        <NoIssues />
       ) : visible.length === 0 ? (
         <NoMatches onReset={() => setFilters(CLEARED_FILTERS)} />
       ) : (
@@ -193,14 +195,31 @@ export function IssueList({
   );
 }
 
+// 목록과 보드가 함께 쓴다.
+export function NoIssues() {
+  return (
+    <EmptyState
+      icon={ListTodoIcon}
+      title="아직 이슈가 없습니다"
+      description="새 이슈를 만들어 할 일을 기록해 보세요."
+      className="mx-6"
+    />
+  );
+}
+
 export function NoMatches({ onReset }: { onReset: () => void }) {
   return (
-    <div className="mx-6 flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
-      <p className="font-medium">조건에 맞는 이슈가 없습니다</p>
-      <Button variant="outline" size="sm" onClick={onReset}>
-        필터 초기화
-      </Button>
-    </div>
+    <EmptyState
+      icon={SearchXIcon}
+      title="조건에 맞는 이슈가 없습니다"
+      description="필터나 검색어를 바꿔 보세요."
+      action={
+        <Button variant="outline" size="sm" onClick={onReset}>
+          필터 초기화
+        </Button>
+      }
+      className="mx-6"
+    />
   );
 }
 

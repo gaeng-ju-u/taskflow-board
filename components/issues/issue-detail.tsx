@@ -126,9 +126,11 @@ export function IssueDetail({
     return found ? formatIssueRef(project.key, found.number) : null;
   };
 
+  // 휴대폰: 제목·설명 → 속성 → 하위 이슈·활동 순서로 쌓는다 (속성을 맨 아래까지 내려가지 않고 바꿀 수 있게).
+  // lg 이상: 속성이 오른쪽 열에서 두 행을 차지한다. 두 번째 행이 1fr이라 속성이 길어도 왼쪽에 틈이 생기지 않는다.
   return (
-    <div className="flex flex-1 flex-col lg:flex-row">
-      <div className="flex min-w-0 flex-1 flex-col gap-4 p-6">
+    <div className="grid flex-1 grid-cols-1 content-start lg:grid-cols-[minmax(0,1fr)_16rem] lg:grid-rows-[auto_1fr]">
+      <div className="flex min-w-0 flex-col gap-4 px-6 pt-6 pb-4 lg:col-start-1 lg:row-start-1">
         <div className="flex items-center justify-between gap-2">
           <nav
             aria-label="위치"
@@ -180,32 +182,11 @@ export function IssueDetail({
             )
           }
         />
-        <SubIssueList
-          parent={issue}
-          subIssues={childIssues(issues, issue.id)}
-          project={{ ...project, workspace_id: workspaceId }}
-          workspaceSlug={workspaceSlug}
-          members={members}
-          cycles={cycles}
-        />
-        <IssueTimeline
-          workspaceId={workspaceId}
-          issueId={issue.id}
-          currentUserId={currentUserId}
-          members={members}
-          labels={labels}
-          issueRef={issueRef}
-          cycleName={(id) =>
-            cycles.find((cycle) => cycle.id === id)?.name ?? null
-          }
-          initialComments={initialComments}
-          initialActivities={initialActivities}
-        />
       </div>
 
       <aside
         aria-label="속성"
-        className="flex flex-col gap-1 border-t p-4 lg:w-64 lg:border-t-0 lg:border-l"
+        className="flex flex-col gap-1 border-y px-6 py-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:border-y-0 lg:border-l lg:p-4"
       >
         <Property label="상태">
           <StatusSelect
@@ -262,6 +243,30 @@ export function IssueDetail({
           />
         </div>
       </aside>
+
+      <div className="flex min-w-0 flex-col gap-4 px-6 pt-4 pb-6 lg:col-start-1 lg:row-start-2">
+        <SubIssueList
+          parent={issue}
+          subIssues={childIssues(issues, issue.id)}
+          project={{ ...project, workspace_id: workspaceId }}
+          workspaceSlug={workspaceSlug}
+          members={members}
+          cycles={cycles}
+        />
+        <IssueTimeline
+          workspaceId={workspaceId}
+          issueId={issue.id}
+          currentUserId={currentUserId}
+          members={members}
+          labels={labels}
+          issueRef={issueRef}
+          cycleName={(id) =>
+            cycles.find((cycle) => cycle.id === id)?.name ?? null
+          }
+          initialComments={initialComments}
+          initialActivities={initialActivities}
+        />
+      </div>
     </div>
   );
 }

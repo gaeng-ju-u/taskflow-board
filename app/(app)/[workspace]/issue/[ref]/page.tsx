@@ -14,15 +14,7 @@ export default function IssuePage({
 }: PageProps<"/[workspace]/issue/[ref]">) {
   return (
     <main className="flex flex-1 flex-col">
-      <Suspense
-        fallback={
-          <div className="flex flex-col gap-4 p-6">
-            <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-            <div className="h-8 w-2/3 animate-pulse rounded bg-muted" />
-            <div className="h-40 animate-pulse rounded bg-muted" />
-          </div>
-        }
-      >
+      <Suspense fallback={<IssueSkeleton />}>
         <IssueContent params={params} />
       </Suspense>
     </main>
@@ -62,5 +54,24 @@ async function IssueContent({
       initialActivities={activities}
       currentUserId={user.id}
     />
+  );
+}
+
+// IssueDetail과 같은 배치 (휴대폰: 제목·설명 → 속성 → 활동, lg: 오른쪽 속성 열)
+function IssueSkeleton() {
+  return (
+    <div className="grid flex-1 grid-cols-1 content-start lg:grid-cols-[minmax(0,1fr)_16rem]">
+      <div className="flex flex-col gap-4 p-6">
+        <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-2/3 animate-pulse rounded bg-muted" />
+        <div className="h-24 animate-pulse rounded bg-muted" />
+        <div className="hidden h-40 animate-pulse rounded bg-muted lg:block" />
+      </div>
+      <div className="flex flex-col gap-3 border-y px-6 py-4 lg:border-y-0 lg:border-l lg:p-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-6 animate-pulse rounded bg-muted" />
+        ))}
+      </div>
+    </div>
   );
 }
