@@ -30,9 +30,12 @@ import { projectPath, type WorkspaceRef } from "./types";
 export function ProjectNav({
   workspace,
   initialProjects,
+  canDelete,
 }: {
   workspace: WorkspaceRef;
   initialProjects: Project[];
+  // 데모 계정은 프로젝트를 지울 수 없다 (DB 트리거가 막는다. 여기서는 메뉴만 숨긴다)
+  canDelete: boolean;
 }) {
   const { data: projects = initialProjects } = useProjects(
     workspace.id,
@@ -70,6 +73,7 @@ export function ProjectNav({
               key={project.id}
               project={project}
               workspaceSlug={workspace.slug}
+              canDelete={canDelete}
             />
           ))}
         </ul>
@@ -81,9 +85,11 @@ export function ProjectNav({
 function ProjectNavItem({
   project,
   workspaceSlug,
+  canDelete,
 }: {
   project: Project;
   workspaceSlug: string;
+  canDelete: boolean;
 }) {
   const pathname = usePathname();
   const href = projectPath(workspaceSlug, project.key);
@@ -125,13 +131,15 @@ function ProjectNavItem({
             <PencilIcon />
             이름 변경
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleting(true)}
-          >
-            <TrashIcon />
-            삭제
-          </DropdownMenuItem>
+          {canDelete && (
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => setDeleting(true)}
+            >
+              <TrashIcon />
+              삭제
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

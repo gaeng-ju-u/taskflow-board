@@ -27,11 +27,13 @@ export function MemberList({
   members,
   currentUserId,
   isOwner,
+  canLeave,
 }: {
   workspaceId: string;
   members: Member[];
   currentUserId: string;
   isOwner: boolean;
+  canLeave: boolean;
 }) {
   const updateRole = useUpdateMemberRole(workspaceId);
   const removeMember = useRemoveMember(workspaceId, {
@@ -93,28 +95,28 @@ export function MemberList({
                 </span>
               )}
 
-              {isMe ? (
-                <ConfirmButton
-                  label="워크스페이스 나가기"
-                  icon={<LogOutIcon />}
-                  disabled={isLastOwner}
-                  title="워크스페이스에서 나갈까요?"
-                  description="맡은 이슈의 담당이 해제됩니다. 다시 참여하려면 새 초대가 필요합니다."
-                  confirmLabel="나가기"
-                  onConfirm={() => removeMember.mutate(member.id)}
-                />
-              ) : (
-                isOwner && (
-                  <ConfirmButton
-                    label={`${member.name} 내보내기`}
-                    icon={<UserMinusIcon />}
-                    title={`${member.name}님을 내보낼까요?`}
-                    description="맡은 이슈의 담당이 해제됩니다. 다시 참여하려면 새 초대가 필요합니다."
-                    confirmLabel="내보내기"
-                    onConfirm={() => removeMember.mutate(member.id)}
-                  />
-                )
-              )}
+              {isMe
+                ? canLeave && (
+                    <ConfirmButton
+                      label="워크스페이스 나가기"
+                      icon={<LogOutIcon />}
+                      disabled={isLastOwner}
+                      title="워크스페이스에서 나갈까요?"
+                      description="맡은 이슈의 담당이 해제됩니다. 다시 참여하려면 새 초대가 필요합니다."
+                      confirmLabel="나가기"
+                      onConfirm={() => removeMember.mutate(member.id)}
+                    />
+                  )
+                : isOwner && (
+                    <ConfirmButton
+                      label={`${member.name} 내보내기`}
+                      icon={<UserMinusIcon />}
+                      title={`${member.name}님을 내보낼까요?`}
+                      description="맡은 이슈의 담당이 해제됩니다. 다시 참여하려면 새 초대가 필요합니다."
+                      confirmLabel="내보내기"
+                      onConfirm={() => removeMember.mutate(member.id)}
+                    />
+                  )}
             </li>
           );
         })}

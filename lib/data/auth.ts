@@ -3,6 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
+import { isDemoEmail } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = {
@@ -10,6 +11,8 @@ export type CurrentUser = {
   email: string;
   name: string;
   avatarUrl: string | null;
+  // 공유 데모 계정인지 (데모 배너, 데모에서 막힌 버튼 숨김)
+  isDemo: boolean;
 };
 
 // 요청 하나 안에서는 여러 컴포넌트가 불러도 한 번만 조회한다 (React cache).
@@ -30,5 +33,6 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
     email: auth.claims.email ?? "",
     name: profile?.name || auth.claims.email || "사용자",
     avatarUrl: profile?.avatar_url ?? null,
+    isDemo: isDemoEmail(auth.claims.email ?? ""),
   };
 });

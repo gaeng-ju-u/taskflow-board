@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DemoSignInButton } from "@/components/auth/demo-sign-in-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 
@@ -17,9 +18,12 @@ export default function Home() {
         <p className="text-muted-foreground">
           프로젝트와 이슈를 한곳에서 관리하세요.
         </p>
-        <Button render={<Link href="/login" />} nativeButton={false}>
-          시작하기
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button render={<Link href="/login" />} nativeButton={false}>
+            시작하기
+          </Button>
+          <DemoSignInButton />
+        </div>
       </main>
     </div>
   );
